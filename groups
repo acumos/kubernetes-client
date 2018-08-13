@@ -1,0 +1,3 @@
+# UUID                                                                              	Group Name
+#
+ldap:cn=acumos-gerrit-kubernetes-client-committers,ou=Groups,dc=freestandards,dc=org	ldap/acumos-gerrit-kubernetes-client-committers
