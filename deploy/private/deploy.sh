@@ -1,0 +1,167 @@
+#!/bin/bash
+# ===============LICENSE_START=======================================================
+# Acumos Apache-2.0
+# ===================================================================================
+# Copyright (C) 2018 AT&T Intellectual Property & Tech Mahindra. All rights reserved.
+# ===================================================================================
+# This Acumos software file is distributed by AT&T and Tech Mahindra
+# under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# This file is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============LICENSE_END=========================================================
+#
+#. What this is: Deployment script for Acumos solutions under private kubernetes
+#. clusters.
+#. 
+#. Prerequisites:
+#. - Ubuntu Xenial or Centos 7 server
+#. - Via the Acumos platform, download a solution.zip deployment package for
+#.   a specific solution/revision, and unzip the package into a folder.
+#. Usage:
+#. - bash deploy.sh <user> <pass> <datasource>
+#.   user: username on the Acumos platform
+#.   pass: password on the Acummos platform
+#.   datasource: file path or URL of data source for databroker
+
+trap 'fail' ERR
+
+function fail() {
+  log "$1"
+  exit 1
+}
+
+function log() {
+  set +x
+  fname=$(caller 0 | awk '{print $2}')
+  fline=$(caller 0 | awk '{print $1}')
+  echo; echo "$fname:$fline ($(date)) $1"
+  set -x
+}
+
+function docker_login() {
+  while ! sudo docker login $1 -u $2 -p $3 ; do
+    log "Docker login failed at $1, trying again"
+  done
+}
+
+function prepare_docker() {
+  log "retrieve the hostname:port of the Acumos platform docker proxy from the solution.yaml, using the 'image' attribute of any model microservice"
+  dockerProxy=$(grep 'image.*\/' solution.yaml | grep -ve acumos.org | head -1 | sed 's/        image: //' | cut -d '/' -f 1)
+
+  log "configure the docker service to allow access to the Acumos platform docker proxy as an insecure registry."
+  cat << EOF | sudo tee /etc/docker/daemon.json
+{
+  "insecure-registries": [
+    "$dockerProxy"
+  ],
+  "disable-legacy-registry": true
+}
+EOF
+
+  sudo systemctl daemon-reload
+  sudo service docker restart
+
+  log "login to the Acumos platform docker proxy using the Acumos platform username and password provided by the user"
+  docker_login https://dockerProxy -u $username -p $password
+  log "Log into LF Nexus Docker repos"
+  docker_login https://nexus3.acumos.org:10004 docker docker
+  docker_login https://nexus3.acumos.org:10003 docker docker
+  docker_login https://nexus3.acumos.org:10002 docker docker
+  sudo chown -R $USER:$USER ~/.docker
+}
+
+function update_datasource() {
+  if [[ $(grep -c 'app: databroker' solution.yaml) -gt 0 ]]; then
+    log "copy the subfolders under 'microservice' from the unpacked solution.zip to /var/acumos"
+
+    sudo mkdir -p /var/acumos
+    sudo chown $USER:$USER /var/acumos
+    cp -r microservice /var/acumos/.
+
+    log "update databroker.json per the datasource selected by the user"
+    if [[ $(echo $datasource | grep -c ':') -gt 0 ]]; then
+      sed -i -- "s~\"target_system_url\": \".*\"~\"target_system_url\": \"$datasource\"~" databroker.json
+    else
+      sed -i -- 's~"local_system_data_file_path": ".*"~"local_system_data_file_path": "/var/acumos/datasource"~' databroker.json
+    fi
+  fi
+}
+
+prepare_k8s() {
+  if [[ $(kubectl get namespaces | grep -c 'acumos ') -eq 0 ]]; then
+    log "create a namespace 'acumos' using kubectl"
+    while ! kubectl create namespace acumos; do
+      log "kubectl API is not yet ready ... waiting 10 seconds"
+      sleep 10
+    done
+  fi
+
+  log "Create k8s secret for image pulling from docker using ~/.docker/config.json"
+   b64=$(cat ~/.docker/config.json | base64 -w 0)
+  if [[ $(kubectl get secrets -n acumos | grep -c 'acumos-registry ') == 1 ]]; then
+    kubectl delete secret -n acumos acumos-registry
+   fi
+  cat <<EOF >acumos-registry.yaml
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: acumos-registry
+    namespace: acumos
+  data:
+    .dockerconfigjson: $b64
+  type: kubernetes.io/dockerconfigjson
+  EOF
+
+  kubectl create -f acumos-registry.yaml
+}
+
+function deploy_solution() {
+  log "invoke kubectl to deploy the services and deployments in solution.yaml"
+  kubectl create -f solution.yaml
+
+  if [[ $(grep -c 'app: databroker' solution.yaml) -gt 0 ]]; then
+    log "monitor the status of the databroker service and deployment, and when they are running, send databroker.json to the databroker via its /configDB API"
+    databroker=$(kubectl get pods --namespace kube-system | awk '/databroker/ {print $3}')
+    while [[ "$databroker" != "Running" ]]; do
+      log "databroker status is $databroker. Waiting 60 seconds"
+      sleep 60
+      databroker=$(kubectl get pods --namespace kube-system | awk '/databroker/ {print $3}')
+    done
+    log "databroker status is $databroker"
+  fi
+
+  log "monitor the status of all other services and deployments, and when they are running"
+  log "Wait for all pods to be Running"
+  pods=$(kubectl get pods --namespace acumos | awk '{print $1}')
+  for pod in $pods; do
+    status=$(kubectl get pods --namespace kube-system | awk "/$pod/ {print \$3}")
+    while [[ "$status" != "Running" ]]; do
+      log "$pod status is $status. Waiting 10 seconds"
+      sleep 10
+      status=$(kubectl get pods --namespace kube-system | awk "/$pod/ {print \$3}")
+    done
+    log "$pod status is $status"
+  done
+
+  if [[ $(grep -c 'app: modelconnector' solution.yaml) -gt 0 ]]; then
+    log "send dockerinfo.json to the modelconnector service via the /putDockerInfo API"
+    log "send blueprint.json to the modelconnector service via the /putBlueprint API"
+  fi
+}
+
+username=$1
+password=$2
+datasource=$3
+
+prepare_docker
+update_datasource
+prepare_k8s
+deploy_solution
+
