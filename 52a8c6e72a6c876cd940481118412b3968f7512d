@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aea07be6_33a57881",
+        "filename": "LICENSE.txt",
+        "patchSetId": 5
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 51
+      },
+      "writtenOn": "2018-08-15T15:01:49Z",
+      "side": 1,
+      "message": "I believe this is missing the Copyright statement",
+      "revId": "52a8c6e72a6c876cd940481118412b3968f7512d",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
