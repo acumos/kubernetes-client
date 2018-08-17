@@ -647,35 +647,37 @@ per the assignments in solution.yaml as above. Example of dockerinfo.json for
 the composite solution above:
 
 .. code-block:: yaml
-{
-  "docker_info_list": [
-    {
-      "container_name": "databroker",
-      "ip_address": "databroker",
-      "port": "8556"
-    },
-    {
-      "container_name": "modelconnector",
-      "ip_address": "modelconnector",
-      "port": "8555"
-    },
-    {
-      "container_name": "probe",
-      "ip_address": "probe",
-      "port": "5006"
-    },
-    {
-      "container_name": "mymodel1",
-      "ip_address": "mymodel1",
-      "port": "8557"
-    },
-    {
-      "container_name": "mymodel1",
-      "ip_address": "mymodel1",
-      "port": "8558"
-    }
-  ]
-}
+
+  {
+    "docker_info_list": [
+      {
+        "container_name": "databroker",
+        "ip_address": "databroker",
+        "port": "8556"
+      },
+      {
+        "container_name": "modelconnector",
+        "ip_address": "modelconnector",
+        "port": "8555"
+      },
+      {
+        "container_name": "probe",
+        "ip_address": "probe",
+        "port": "5006"
+      },
+      {
+        "container_name": "mymodel1",
+        "ip_address": "mymodel1",
+        "port": "8557"
+      },
+      {
+        "container_name": "mymodel1",
+        "ip_address": "mymodel1",
+        "port": "8558"
+      }
+    ]
+  }
+..
 
 ............
 docker-proxy
