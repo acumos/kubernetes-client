@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1d3c7b40_fcac5879",
+        "filename": "docs/deploy-in-private-k8s.rst",
+        "patchSetId": 1
+      },
+      "lineNbr": 649,
+      "author": {
+        "id": 94
+      },
+      "writtenOn": "2018-08-17T17:08:00Z",
+      "side": 1,
+      "message": "should this be json instead of yaml?",
+      "range": {
+        "startLine": 649,
+        "startChar": 16,
+        "endLine": 649,
+        "endChar": 20
+      },
+      "revId": "d4c73d62e2405fb3e21bfadc3cf5dbf221cb7845",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
