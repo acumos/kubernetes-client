@@ -25,10 +25,10 @@
 #. - Via the Acumos platform, download a solution.zip deployment package for
 #.   a specific solution/revision, and unzip the package into a folder.
 #. Usage:
-#. - bash deploy.sh <user> <pass> <datasource>
+#. - bash deploy.sh <user> <pass> [datasource]
 #.   user: username on the Acumos platform
 #.   pass: password on the Acummos platform
-#.   datasource: file path or URL of data source for databroker
+#.   datasource: (optional) file path or URL of data source for databroker
 
 trap 'fail' ERR
 
@@ -46,17 +46,20 @@ function log() {
 }
 
 function docker_login() {
+  trap 'fail' ERR
   while ! sudo docker login $1 -u $2 -p $3 ; do
     log "Docker login failed at $1, trying again"
   done
 }
 
 function prepare_docker() {
+  trap 'fail' ERR
   log "retrieve the hostname:port of the Acumos platform docker proxy from the solution.yaml, using the 'image' attribute of any model microservice"
   dockerProxy=$(grep 'image.*\/' solution.yaml | grep -ve acumos.org | head -1 | sed 's/        image: //' | cut -d '/' -f 1)
 
-  log "configure the docker service to allow access to the Acumos platform docker proxy as an insecure registry."
-  cat << EOF | sudo tee /etc/docker/daemon.json
+  if [[ $(sudo grep -c $dockerProxy /etc/docker/daemon.json) -eq 0 ]]; then
+    log "configure the docker service to allow access to the Acumos platform docker proxy as an insecure registry."
+    cat << EOF | sudo tee /etc/docker/daemon.json
 {
   "insecure-registries": [
     "$dockerProxy"
@@ -64,12 +67,12 @@ function prepare_docker() {
   "disable-legacy-registry": true
 }
 EOF
-
-  sudo systemctl daemon-reload
-  sudo service docker restart
+    sudo systemctl daemon-reload
+    sudo service docker restart
+  fi
 
   log "login to the Acumos platform docker proxy using the Acumos platform username and password provided by the user"
-  docker_login https://dockerProxy -u $username -p $password
+  docker_login https://$dockerProxy $username $password
   log "Log into LF Nexus Docker repos"
   docker_login https://nexus3.acumos.org:10004 docker docker
   docker_login https://nexus3.acumos.org:10003 docker docker
@@ -78,11 +81,12 @@ EOF
 }
 
 function update_datasource() {
+  trap 'fail' ERR
   if [[ $(grep -c 'app: databroker' solution.yaml) -gt 0 ]]; then
     log "copy the subfolders under 'microservice' from the unpacked solution.zip to /var/acumos"
 
-    sudo mkdir -p /var/acumos
-    sudo chown $USER:$USER /var/acumos
+    sudo mkdir -p /var/acumos/log
+    sudo chown -R $USER:$USER /var/acumos
     cp -r microservice /var/acumos/.
 
     log "update databroker.json per the datasource selected by the user"
@@ -95,6 +99,7 @@ function update_datasource() {
 }
 
 prepare_k8s() {
+  trap 'fail' ERR
   if [[ $(kubectl get namespaces | grep -c 'acumos ') -eq 0 ]]; then
     log "create a namespace 'acumos' using kubectl"
     while ! kubectl create namespace acumos; do
@@ -108,21 +113,22 @@ prepare_k8s() {
   if [[ $(kubectl get secrets -n acumos | grep -c 'acumos-registry ') == 1 ]]; then
     kubectl delete secret -n acumos acumos-registry
    fi
-  cat <<EOF >acumos-registry.yaml
-  apiVersion: v1
-  kind: Secret
-  metadata:
-    name: acumos-registry
-    namespace: acumos
-  data:
-    .dockerconfigjson: $b64
-  type: kubernetes.io/dockerconfigjson
-  EOF
+  cat << EOF >acumos-registry.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: acumos-registry
+  namespace: acumos
+data:
+  .dockerconfigjson: $b64
+type: kubernetes.io/dockerconfigjson
+EOF
 
   kubectl create -f acumos-registry.yaml
 }
 
 function deploy_solution() {
+  trap 'fail' ERR
   log "invoke kubectl to deploy the services and deployments in solution.yaml"
   kubectl create -f solution.yaml
 
@@ -139,20 +145,22 @@ function deploy_solution() {
 
   log "monitor the status of all other services and deployments, and when they are running"
   log "Wait for all pods to be Running"
-  pods=$(kubectl get pods --namespace acumos | awk '{print $1}')
+  pods=$(kubectl get pods --namespace acumos | awk '/-/ {print $1}')
   for pod in $pods; do
-    status=$(kubectl get pods --namespace kube-system | awk "/$pod/ {print \$3}")
+    status=$(kubectl get pods -n acumos | awk "/$pod/ {print \$3}")
     while [[ "$status" != "Running" ]]; do
       log "$pod status is $status. Waiting 10 seconds"
       sleep 10
-      status=$(kubectl get pods --namespace kube-system | awk "/$pod/ {print \$3}")
+      status=$(kubectl get pods -n acumos | awk "/$pod/ {print \$3}")
     done
     log "$pod status is $status"
   done
 
   if [[ $(grep -c 'app: modelconnector' solution.yaml) -gt 0 ]]; then
     log "send dockerinfo.json to the modelconnector service via the /putDockerInfo API"
+    curl -v -X POST http://127.0.0.1:30555/putDockerInfo -d @dockerinfo.json
     log "send blueprint.json to the modelconnector service via the /putBlueprint API"
+    curl -v -X POST http://127.0.0.1:30555/putBlueprint -d @blueprint.json
   fi
 }
 

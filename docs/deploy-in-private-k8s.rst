@@ -386,7 +386,9 @@ Design notes for the solution.yaml structure:
     * any model microservices that require external exposure for receiving data
     * probe (for its UI)
 
-Example of the generated solution.yaml template for a simple solution:
+Example of the generated solution.yaml template for a simple solution. In this
+example, the model microservice is directly exposed at a NodePort. The NodePort
+value here used here is 30333, in the default range for kubernetes nodePorts.
 
 .. code-block:: yaml
 
@@ -405,6 +407,7 @@ Example of the generated solution.yaml template for a simple solution:
       port: 3330
       targetPort: 3330
   ---
+  apiVersion: apps/v1
   kind: Deployment
   metadata:
     namespace: acumos
@@ -423,13 +426,155 @@ Example of the generated solution.yaml template for a simple solution:
       spec:
         containers:
         - name: mymodel
-          image: acumos.example.com:35001/mymodel
+          image: acumos.example.com:35001/mymodel:1
           ports:
           - name: protobuf-api
             containerPort: 3330
+..
 
 Example of the generated solution.yaml template for a complex (composite)
-solution with two model microservices, databroker, modelconnector, and probe:
+solution with two model microservices and modelconnector. In this example, the
+model microservices are accessed via the modelconnector, which is directly
+exposed at NodePort 30555.
+
+.. code-block:: yaml
+
+  apiVersion: v1
+  kind: Service
+  metadata:
+    namespace: acumos
+    name: modelconnector
+  spec:
+    selector:
+      app: modelconnector
+    type: NodePort
+    ports:
+    - name: mc-api
+      nodePort: 30555
+      port: 8555
+      targetPort: 8555
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    namespace: acumos
+    name: modelconnector
+    labels:
+      app: modelconnector
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: modelconnector
+    template:
+      metadata:
+        labels:
+          app: modelconnector
+      spec:
+        imagePullSecrets:
+        - name: acumos-registry
+        containers:
+        - name: modelconnector
+          image: nexus3.acumos.org:10004/blueprint-orchestrator:1.0.13
+          ports:
+          - name: mc-api
+            containerPort: 8555
+          volumeMounts:
+          - mountPath: /logs
+            name: logs
+        restartPolicy: Always
+        volumes:
+        - name: logs
+          hostPath:
+            path: /var/acumos/log
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    namespace: acumos
+    name: padd1-service
+  spec:
+    selector:
+      app: padd1
+    type: ClusterIP
+    ports:
+    - name: protobuf-api
+      port: 8080
+      targetPort: 8080
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    namespace: acumos
+    name: padd1
+    labels:
+      app: padd1
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: padd1
+    template:
+      metadata:
+        labels:
+          app: padd1
+      spec:
+        imagePullSecrets:
+        - name: acumos-registry
+        containers:
+        - name: padd1
+          image: opnfv02:30882/padd_cee0c147-3c64-48cd-93ae-cdb715a5420c:3
+          ports:
+          - name: protobuf-api
+            containerPort: 8080
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    namespace: acumos
+    name: square1-service
+  spec:
+    selector:
+      app: square1
+    type: ClusterIP
+    ports:
+    - name: protobuf-api
+      port: 8081
+      targetPort: 8081
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    namespace: acumos
+    name: square1
+    labels:
+      app: square1
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: square1
+    template:
+      metadata:
+        labels:
+          app: square1
+      spec:
+        imagePullSecrets:
+        - name: acumos-registry
+        containers:
+        - name: square1
+          image: opnfv02:30882/square_c8797158-3ead-48fd-ab3e-6b429b033677:6
+          ports:
+          - name: protobuf-api
+            containerPort: 8081
+..
+
+Example of the generated solution.yaml template for a complex (composite)
+solution with two model microservices, databroker, modelconnector, and probe.
+In this example, the modelconnector and model microservices are accessed via
+the databroker, which is directly exposed at NodePort 30556. The
+ModelConnector is also exposed at NodePort 30555 so that it can be configured
+by deploy.sh via its APIs.
 
 .. code-block:: yaml
 
@@ -444,10 +589,11 @@ solution with two model microservices, databroker, modelconnector, and probe:
     type: NodePort
     ports:
     - name: databroker-api
-      nodePort: 33330
+      nodePort: 30556
       port: 8556
       targetPort: 8556
   ---
+  apiVersion: apps/v1
   kind: Deployment
   metadata:
     namespace: acumos
@@ -480,6 +626,7 @@ solution with two model microservices, databroker, modelconnector, and probe:
           hostPath:
             path: /var/acumos/datasource
   ---
+  apiVersion: v1
   kind: Service
   metadata:
     namespace: acumos
@@ -493,6 +640,7 @@ solution with two model microservices, databroker, modelconnector, and probe:
       port: 8000
       targetPort: 8000
   ---
+  apiVersion: apps/v1
   kind: Deployment
   metadata:
     namespace: acumos
@@ -519,7 +667,16 @@ solution with two model microservices, databroker, modelconnector, and probe:
             containerPort: 8000
           - name: probe-api
             containerPort: 5006
+          volumeMounts:
+          - mountPath: /var/acumos/
+            name: proto-files
+        restartPolicy: Always
+        volumes:
+        - name: proto-files
+          hostPath:
+            path: /var/acumos/
   ---
+  apiVersion: v1
   kind: Service
   metadata:
     namespace: acumos
@@ -527,12 +684,14 @@ solution with two model microservices, databroker, modelconnector, and probe:
   spec:
     selector:
       app: modelconnector
-    type: ClusterIP
+    type: NodePort
     ports:
-    - name: modelconnector-api
-    - port: 8555
+    - name: mc-api
+      nodePort: 30555
+      port: 8555
       targetPort: 8555
   ---
+  apiVersion: apps/v1
   kind: Deployment
   metadata:
     namespace: acumos
@@ -553,92 +712,99 @@ solution with two model microservices, databroker, modelconnector, and probe:
         - name: acumos-registry
         containers:
         - name: modelconnector
-          image: nexus3.acumos.org:10004/blueprint-orchestrator
+          image: nexus3.acumos.org:10004/blueprint-orchestrator:1.0.13
           ports:
-          - name: modelconnector-api
+          - name: mc-api
             containerPort: 8555
           volumeMounts:
-          - mountPath: /var/acumos/
-            name: proto-files
+          - mountPath: /logs
+            name: logs
         restartPolicy: Always
         volumes:
-        - name: proto-files
+        - name: logs
           hostPath:
-            path: /var/acumos/
+            path: /var/acumos/log
   ---
+  apiVersion: v1
   kind: Service
   metadata:
     namespace: acumos
-    name: mymodel1
+    name: padd1-service
   spec:
     selector:
-      app: mymodel1
+      app: padd1
     type: ClusterIP
     ports:
-    - port: 8557
-      targetPort: 8557
+    - name: protobuf-api
+      port: 8080
+      targetPort: 8080
   ---
+  apiVersion: apps/v1
   kind: Deployment
   metadata:
     namespace: acumos
-    name: mymodel1
+    name: padd1
     labels:
-      app: mymodel1
+      app: padd1
   spec:
     replicas: 1
     selector:
       matchLabels:
-        app: mymodel1
+        app: padd1
     template:
       metadata:
         labels:
-          app: mymodel1
+          app: padd1
       spec:
         imagePullSecrets:
         - name: acumos-registry
         containers:
-        - name: mymodel1
-          image: acumos.example.com:35001/mymodel1
+        - name: padd1
+          image: opnfv02:30882/padd_cee0c147-3c64-48cd-93ae-cdb715a5420c:3
           ports:
-          - containerPort: 8557
-        restartPolicy: Always
+          - name: protobuf-api
+            containerPort: 8080
   ---
+  apiVersion: v1
   kind: Service
   metadata:
     namespace: acumos
-    name: mymodel2
+    name: square1-service
   spec:
     selector:
-      app: mymodel2
+      app: square1
     type: ClusterIP
     ports:
-    - port: 8558
-      targetPort: 8558
+    - name: protobuf-api
+      port: 8081
+      targetPort: 8081
   ---
+  apiVersion: apps/v1
   kind: Deployment
   metadata:
     namespace: acumos
-    name: mymodel2
+    name: square1
     labels:
-      app: mymodel2
+      app: square1
   spec:
     replicas: 1
     selector:
       matchLabels:
-        app: mymodel2
+        app: square1
     template:
       metadata:
         labels:
-          app: mymodel2
+          app: square1
       spec:
         imagePullSecrets:
         - name: acumos-registry
         containers:
-        - name: mymodel2
-          image: acumos.example.com:35001/mymodel2
+        - name: square1
+          image: opnfv02:30882/square_c8797158-3ead-48fd-ab3e-6b429b033677:6
           ports:
-          - containerPort: 8558
-        restartPolicy: Always
+          - name: protobuf-api
+            containerPort: 8081
+..
 
 The included dockerinfo.json can be created directly by the kubernetes-client
 as both the container name and the cluster-internal address (resolvable
@@ -646,36 +812,38 @@ cluster-internal hostname, and port) of each container can be pre-determined
 per the assignments in solution.yaml as above. Example of dockerinfo.json for
 the composite solution above:
 
-.. code-block:: yaml
-{
-  "docker_info_list": [
-    {
-      "container_name": "databroker",
-      "ip_address": "databroker",
-      "port": "8556"
-    },
-    {
-      "container_name": "modelconnector",
-      "ip_address": "modelconnector",
-      "port": "8555"
-    },
-    {
-      "container_name": "probe",
-      "ip_address": "probe",
-      "port": "5006"
-    },
-    {
-      "container_name": "mymodel1",
-      "ip_address": "mymodel1",
-      "port": "8557"
-    },
-    {
-      "container_name": "mymodel1",
-      "ip_address": "mymodel1",
-      "port": "8558"
-    }
-  ]
-}
+.. code-block:: json
+
+  {
+    "docker_info_list": [
+      {
+        "container_name": "databroker",
+        "ip_address": "databroker",
+        "port": "30333"
+      },
+      {
+        "container_name": "modelconnector",
+        "ip_address": "modelconnector",
+        "port": "8555"
+      },
+      {
+        "container_name": "probe",
+        "ip_address": "probe",
+        "port": "5006"
+      },
+      {
+        "container_name": "padd1",
+        "ip_address": "padd1",
+        "port": "8080"
+      },
+      {
+        "container_name": "square1",
+        "ip_address": "square1",
+        "port": "8081"
+      }
+    ]
+  }
+..
 
 ............
 docker-proxy
