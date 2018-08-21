@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "06a5c63b_292b1752",
+        "filename": "docs/deploy-in-private-k8s.rst",
+        "patchSetId": 2
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 94
+      },
+      "writtenOn": "2018-08-21T23:05:36Z",
+      "side": 1,
+      "message": "404 not found; and this isn\u0027t the github mirror...",
+      "range": {
+        "startLine": 358,
+        "startChar": 2,
+        "endLine": 358,
+        "endChar": 92
+      },
+      "revId": "148eed05f41165677faded9f63e4d881e66fd82b",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
