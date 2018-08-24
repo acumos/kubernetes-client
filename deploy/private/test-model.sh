@@ -85,7 +85,7 @@ function test_model() {
 	| ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
       --proto_path=microservice/$firstms microservice/$firstms/model.proto \
 	| curl -s --request POST --header "Content-Type: application/protobuf" \
-      --data-binary @- http://$host:30555/padd \
+      --data-binary @- http://$host:30555/$firstop \
 	| ~/protoc/bin/protoc --decode $lastpkg.$lastmsg \
       --proto_path=microservice/$lastms microservice/$lastms/model.proto
 }
