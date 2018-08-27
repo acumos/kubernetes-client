@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.dockerKube</groupId>
+	<artifactId>kubernetes-client</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>kubernetes-client</name>
+	<description>Demo project for Spring Boot</description>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>2.0.4.RELEASE</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+		<skipTests>false</skipTests>
+		<!-- Jenkins invokes mvn with argument -Dbuild.number=${BUILD_NUMBER} -->
+		<build.number>0</build.number>
+		<!-- Not supplied to all jobs; e.g., Javadoc -->
+		<docker.pull.registry>nexus3.acumos.org:10001</docker.pull.registry>
+		<!-- Supplied by Jenkins -->
+		<docker.push.registry>${env.NEXUS3_PUSH_REGISTRY}</docker.push.registry>
+		<!-- For distributionManagement section -->
+		<acumos.nexus.url>https://nexus.acumos.org</acumos.nexus.url>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+         <dependency>
+			<groupId>org.acumos.common-dataservice</groupId>
+			<artifactId>cmn-data-svc-client</artifactId>
+			<version>1.16.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.acumos.acumos-nexus-client</groupId>
+			<artifactId>acumos-nexus-client</artifactId>
+			<version>2.2.0</version>
+		</dependency>
+		 <dependency>
+		    <groupId>com.googlecode.json-simple</groupId>
+		    <artifactId>json-simple</artifactId>
+		    <version>1.1.1</version>
+        </dependency>
+        <dependency>
+			<groupId>com.github.cverges.expect4j</groupId>
+			<artifactId>expect4j</artifactId>
+			<version>1.6</version>
+			
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions> 
+			 
+		</dependency>
+	    <dependency>
+		    <groupId>com.fasterxml.jackson.dataformat</groupId>
+		    <artifactId>jackson-dataformat-yaml</artifactId>
+		    <version>2.7.3</version>
+       </dependency> 
+       <dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-compress</artifactId>
+		    <version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>2.6.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+			<version>2.6.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions> 
+		</dependency>
+		<dependency>
+		    <groupId>javax.servlet</groupId>
+		    <artifactId>servlet-api</artifactId>
+		    <version>2.5</version>
+		    <scope>provided</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+		    <plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>1.14</version>
+				<configuration>
+					<licenseName>acumos</licenseName>
+					<licenseResolver>${project.baseUri}/src/license</licenseResolver>
+					<addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
+					<processStartTag>===============LICENSE_START=======================================================</processStartTag>
+					<processEndTag>===============LICENSE_END=========================================================</processEndTag>
+					<sectionDelimiter>===================================================================================</sectionDelimiter>
+					<inceptionYear>2017</inceptionYear>
+					<organizationName><![CDATA[AT&T Intellectual Property & Tech Mahindra. All rights reserved.]]></organizationName>
+					<projectName>Acumos</projectName>
+					<canUpdateCopyright>true</canUpdateCopyright>
+					<canUpdateDescription>true</canUpdateDescription>
+					<canUpdateLicense>true</canUpdateLicense>
+					<emptyLineAfterHeader>true</emptyLineAfterHeader>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<!-- <version>1.4.0</version> -->
+			</plugin>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<!-- <version>3.0</version> -->
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<!-- Spring sets the <version>2.5</version> -->
+				<configuration>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+						<manifestEntries>
+							<Implementation-Version>${project.version}-b${build.number}</Implementation-Version>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						 <goals>
+							<goal>single</goal>
+						</goals> 
+						<configuration>
+							<descriptorRefs>
+								<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.7.9</version>
+				<executions>
+					<execution>
+						<id>default-prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>default-report</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>0.21.0</version>
+				<configuration>
+					<verbose>true</verbose>
+					<!-- docker runs on the LF build minion so the default value is ok -->
+					<!-- LF <dockerHost>unix:///var/run/docker.sock</dockerHost> LF -->
+					<pullRegistry>${docker.pull.registry}</pullRegistry>
+					<pushRegistry>${docker.push.registry}</pushRegistry>
+					<!-- LF credentials are not supplied here -->
+					<images>
+						<image>
+							<!-- Specify a tag to avoid default tag "latest" -->
+							<name>kubernetes-client:${project.version}</name>
+							<build>
+								<from>frolvlad/alpine-oraclejdk8:slim</from>
+								<tags>
+									<!-- Add tag with build number -->
+									<tag>${project.version}-b${build.number}</tag>
+								</tags>
+								<assembly>
+									<inline>
+										<files>
+											<file>
+												<source>application.properties</source>
+												<outputDirectory />
+												<destName>application.properties</destName>
+											</file>
+											<file>
+												<source>target/${project.artifactId}-${project.version}.${project.packaging}</source>
+												<outputDirectory />
+											</file>
+										</files>
+									</inline>
+								</assembly>
+								<cmd>
+									<!-- CDATA prevents Eclipse from breaking/reformatting the line -->
+									<shell><![CDATA[java -Xms128m -Xmx512m -Djava.security.egd=file:/dev/./urandom -jar /maven/${project.artifactId}-${project.version}.${project.packaging}]]></shell>
+								</cmd>
+							</build>
+						</image>
+					</images>
+				</configuration>
+				<!-- build Docker images in install phase, push in deploy phase -->
+				<executions>
+					<execution>
+						<goals>
+							<goal>build</goal>
+							<goal>push</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	<distributionManagement>
+		<snapshotRepository>
+			<!-- must match ID in Jenkins settings -->
+			<id>acumos-nexus</id>
+			<name>acumos-repository-snapshots</name>
+			<url>${acumos.nexus.url}/${acumos.nexus.snapshot.path}</url>
+		</snapshotRepository>
+		<repository>
+			<!-- must match ID in Jenkins settings -->
+			<id>acumos-nexus</id>
+			<name>acumos-repository-releases</name>
+			<url>${acumos.nexus.url}/${acumos.nexus.release.path}</url>
+		</repository>
+	</distributionManagement>
+
+</project>
