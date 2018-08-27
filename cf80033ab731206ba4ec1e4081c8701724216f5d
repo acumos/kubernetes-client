@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "471bd03b_447c9ae9",
+        "filename": "src/main/java/com/dockerKube/serviceImpl/KubeServiceImpl.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 87
+      },
+      "writtenOn": "2018-08-27T21:00:53Z",
+      "side": 1,
+      "message": "Can we remove the Hard coded constants",
+      "revId": "cf80033ab731206ba4ec1e4081c8701724216f5d",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "831baec2_1af36791",
+        "filename": "src/main/java/com/dockerKube/serviceImpl/KubeServiceImpl.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 87
+      },
+      "writtenOn": "2018-08-27T21:00:53Z",
+      "side": 1,
+      "message": "This can be replaced via enhanced for loop",
+      "revId": "cf80033ab731206ba4ec1e4081c8701724216f5d",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "48979c40_8336e343",
+        "filename": "src/main/java/com/dockerKube/serviceImpl/KubeServiceImpl.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 346,
+      "author": {
+        "id": 87
+      },
+      "writtenOn": "2018-08-27T21:00:53Z",
+      "side": 1,
+      "message": "Remove stack trace and add finally to clean up.",
+      "revId": "cf80033ab731206ba4ec1e4081c8701724216f5d",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
