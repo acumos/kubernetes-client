@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Put this file into src/main/resources -->
+<configuration>
+
+    <contextName>AcumosONM</contextName>
+	<property name="LOG_HOME" value="log" />
+	<timestamp key="bySecond" datePattern="yyyyMMdd.HHmmss" />
+    <jmxConfigurator/>
+    
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+           <pattern>%d{HH:mm:ss.SSS}|%contextName||[%X{user}]|[%thread]| %-5level| %logger{36} - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+          <level>${log_level}</level>
+          <onMatch>ACCEPT</onMatch>
+          <onMismatch>DENY</onMismatch>
+        </filter>
+          <!--   <Filters>
+                <MarkerFilter marker="time" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters> -->
+    </appender> 
+
+    <!-- This appender to catch all except trace -->
+    <appender name="DEBUG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/Kubernets_log_${bySecond}.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logback_example_debug.log.%d{yyyy-MM-dd}.gz</fileNamePattern>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${log_level}</level>
+        </filter>
+        <encoder>
+             <pattern>%d{HH:mm:ss.SSS}|%contextName|[%thread]| %-5level| %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- This appender to catch only errors -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/Kubernets_error_${bySecond}.log</file>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logback_example_error.log.%d{yyyy-MM-dd}.gz</fileNamePattern>
+        </rollingPolicy>
+
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <encoder>
+            <pattern>%d{ISO8601} %-5p [%c{3}] \(%t:%X{}\) %m%n</pattern>
+        </encoder>
+    </appender>
+    <!-- <appender name="ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/access.log</file>
+         <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>access.log.%d{yyyy-MM-dd}.log</FileNamePattern>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <encoder>
+            <pattern>%d{ISO8601} %-5p [%c{3}] \(%t:%X{}\) %m%n</pattern>
+        </encoder>
+    </appender> -->
+    <root level="DEBUG">
+    <!-- <root>
+        <level value="${logger.root.level}"/> -->
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="DEBUG_FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+
+    <!-- Third Parties Logs -->
+    <!-- <logger name="com.security.service" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ACCESS_FILE" />
+    </logger> -->
+    <logger name="org.springframework">
+        <level value="WARN"/>
+    </logger>
+    <logger name="org.apache" level="WARN" />
+    <logger name="httpclient" level="WARN" /> 
+
+</configuration>
