@@ -2,6 +2,63 @@
   "comments": [
     {
       "key": {
+        "uuid": "64dd037a_ab5c426e",
+        "filename": "application.properties",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 4
+      },
+      "writtenOn": "2018-08-29T18:23:11Z",
+      "side": 1,
+      "message": "Pls add license header so you don\u0027t have to hear it from Bryan",
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "49b0b591_afd96390",
+        "filename": "pom.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 4
+      },
+      "writtenOn": "2018-08-29T18:23:11Z",
+      "side": 1,
+      "message": "Pls add license header",
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9dfc03b1_b018af6f",
+        "filename": "src/main/java/com/dockerKube/beans/ContainerBean.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 4
+      },
+      "writtenOn": "2018-08-29T18:23:11Z",
+      "side": 1,
+      "message": "what is this? com.dockerKube?  That\u0027s not Acumos.",
+      "range": {
+        "startLine": 20,
+        "startChar": 12,
+        "endLine": 20,
+        "endChar": 22
+      },
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0dd6ac73_057dfbd6",
         "filename": "src/main/java/com/dockerKube/beans/DeploymentYml.java",
         "patchSetId": 2
