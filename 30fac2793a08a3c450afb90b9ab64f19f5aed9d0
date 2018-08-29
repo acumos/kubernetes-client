@@ -36,6 +36,75 @@
     },
     {
       "key": {
+        "uuid": "dabe7288_c3f06034",
+        "filename": "pom.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 4
+      },
+      "writtenOn": "2018-08-29T18:24:53Z",
+      "side": 1,
+      "message": "Use org.acumos",
+      "range": {
+        "startLine": 6,
+        "startChar": 14,
+        "endLine": 6,
+        "endChar": 24
+      },
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "064cd433_5674d424",
+        "filename": "pom.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 4
+      },
+      "writtenOn": "2018-08-29T18:24:53Z",
+      "side": 1,
+      "message": "Should use 1.17.1 or later",
+      "range": {
+        "startLine": 50,
+        "startChar": 14,
+        "endLine": 50,
+        "endChar": 16
+      },
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e12abeb7_a9815d50",
+        "filename": "pom.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 262,
+      "author": {
+        "id": 4
+      },
+      "writtenOn": "2018-08-29T18:24:53Z",
+      "side": 1,
+      "message": "Drop this section, it\u0027s not needed.",
+      "range": {
+        "startLine": 262,
+        "startChar": 2,
+        "endLine": 262,
+        "endChar": 24
+      },
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9dfc03b1_b018af6f",
         "filename": "src/main/java/com/dockerKube/beans/ContainerBean.java",
         "patchSetId": 2
