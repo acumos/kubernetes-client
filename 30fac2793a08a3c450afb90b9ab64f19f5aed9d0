@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0dd6ac73_057dfbd6",
+        "filename": "src/main/java/com/dockerKube/beans/DeploymentYml.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 191
+      },
+      "writtenOn": "2018-08-29T15:25:51Z",
+      "side": 1,
+      "message": "Please add javadoc comment",
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5998b59d_8c6e1444",
+        "filename": "src/main/java/com/dockerKube/controller/KubeController.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 191
+      },
+      "writtenOn": "2018-08-29T15:25:51Z",
+      "side": 1,
+      "message": "please add javadoc comment in every file",
+      "range": {
+        "startLine": 56,
+        "startChar": 0,
+        "endLine": 56,
+        "endChar": 1
+      },
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "38303c4a_2f17bdcc",
+        "filename": "src/main/java/com/dockerKube/serviceImpl/KubeServiceImpl.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 191
+      },
+      "writtenOn": "2018-08-29T15:25:51Z",
+      "side": 1,
+      "message": "Please delete all the comments",
+      "range": {
+        "startLine": 340,
+        "startChar": 1,
+        "endLine": 343,
+        "endChar": 5
+      },
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f2db7047_e332222d",
+        "filename": "src/main/resources/logback.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 191
+      },
+      "writtenOn": "2018-08-29T15:25:51Z",
+      "side": 1,
+      "message": "Logback.xml needs to be updated with new logging standards",
+      "range": {
+        "startLine": 11,
+        "startChar": 7,
+        "endLine": 13,
+        "endChar": 18
+      },
+      "revId": "30fac2793a08a3c450afb90b9ab64f19f5aed9d0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
