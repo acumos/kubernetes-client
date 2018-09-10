@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "af3670bd_f55dd301",
+        "filename": "deploy/private/test-model.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 4
+      },
+      "writtenOn": "2018-09-10T17:28:25Z",
+      "side": 1,
+      "message": "I don\u0027t see the go interpreter invoked anywhere by this script -- am I blind?",
+      "range": {
+        "startLine": 54,
+        "startChar": 26,
+        "endLine": 54,
+        "endChar": 35
+      },
+      "revId": "e6cf08335ac7366be0923553b9bd5d7cfb8263b6",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "54fdedec_8d2b929a",
+        "filename": "deploy/private/test-model.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 4
+      },
+      "writtenOn": "2018-09-10T17:28:25Z",
+      "side": 1,
+      "message": "Might be better to test if protoc is anywhere on the path, rather than assume it\u0027s buried in the user\u0027s home directory.",
+      "range": {
+        "startLine": 59,
+        "startChar": 0,
+        "endLine": 59,
+        "endChar": 50
+      },
+      "revId": "e6cf08335ac7366be0923553b9bd5d7cfb8263b6",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
