@@ -45,6 +45,29 @@
       "revId": "e6cf08335ac7366be0923553b9bd5d7cfb8263b6",
       "serverId": "655300a2-7a56-4504-9153-881edd907bea",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1159e365_9bbf9c25",
+        "filename": "deploy/private/test-model.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 4
+      },
+      "writtenOn": "2018-09-10T17:36:56Z",
+      "side": 1,
+      "message": "What about a single model (not composite solution), there\u0027s no blueprint file as far as I know - can this script be used to test?",
+      "range": {
+        "startLine": 68,
+        "startChar": 51,
+        "endLine": 68,
+        "endChar": 65
+      },
+      "revId": "e6cf08335ac7366be0923553b9bd5d7cfb8263b6",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
     }
   ]
 }
