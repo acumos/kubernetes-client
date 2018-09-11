@@ -349,7 +349,8 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		ByteArrayOutputStream bOutput = new ByteArrayOutputStream(12);
 		CommonUtil util=new CommonUtil();
 			if(dBean!=null){
-				 String installScript=util.getFileDetails(DockerKubeConstants.KUBE_PATH_K8S_SH);
+				 String kubernetesFile=dBean.getFolderPath()+"/"+DockerKubeConstants.KUBE_K8S_SH;
+				 String installScript=util.getFileDetails(kubernetesFile);
 				 if(installScript!=null && !"".equals(installScript)){
 					 bOutput.write(installScript.getBytes());
 					 hmap.put(DockerKubeConstants.KUBE_K8S_SH, bOutput);
@@ -357,7 +358,8 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 				 }
 				 
 				 bOutput = new ByteArrayOutputStream(12);
-				 String deployScript=util.getFileDetails(DockerKubeConstants.KUBE_PATH_DEPLOY_SH);
+				 String deployFile=dBean.getFolderPath()+"/"+DockerKubeConstants.KUBE_DEPLOY_SH;
+				 String deployScript=util.getFileDetails(deployFile);
 				 if(installScript!=null && !"".equals(installScript)){
 					 bOutput.write(deployScript.getBytes());
 					 hmap.put(DockerKubeConstants.KUBE_DEPLOY_SH, bOutput);
@@ -400,8 +402,8 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 				        	    String protoFileName=contbean.getProtoUriPath().substring(index+1);
 				        	    bOutput = new ByteArrayOutputStream(12);
 								bOutput.write(contbean.getProtoUriDetails().getBytes());
-				        	    hmap.put(protoFileName, bOutput);
-				        	    logger.debug(protoFileName+" "+bOutput);
+				        	    hmap.put(contbean.getProtoUriPath(), bOutput);
+				        	    logger.debug(contbean.getProtoUriPath()+" "+bOutput);
 							}
 							j++;
 						}
@@ -749,7 +751,8 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
 		CommonUtil util=new CommonUtil();
 			if(dBean!=null){
 					 bOutput = new ByteArrayOutputStream(12);
-					 String installScript=util.getFileDetails(DockerKubeConstants.KUBE_PATH_K8S_SH);
+					 String kubernetesFile=dBean.getFolderPath()+"/"+DockerKubeConstants.KUBE_K8S_SH;
+					 String installScript=util.getFileDetails(kubernetesFile);
 					 if(installScript!=null && !"".equals(installScript)){
 						 bOutput.write(installScript.getBytes());
 						 hmap.put(DockerKubeConstants.KUBE_K8S_SH, bOutput);
@@ -757,7 +760,8 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
 					 }
 					 
 					 bOutput = new ByteArrayOutputStream(12);
-					 String deployScript=util.getFileDetails(DockerKubeConstants.KUBE_PATH_DEPLOY_SH);
+					 String deployFile=dBean.getFolderPath()+"/"+DockerKubeConstants.KUBE_DEPLOY_SH;
+					 String deployScript=util.getFileDetails(deployFile);
 					 if(installScript!=null && !"".equals(installScript)){
 						 bOutput.write(deployScript.getBytes());
 						 hmap.put(DockerKubeConstants.KUBE_DEPLOY_SH, bOutput);

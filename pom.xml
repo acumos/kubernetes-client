@@ -5,7 +5,7 @@
 
 	<groupId>com.dockerKube</groupId>
 	<artifactId>kubernetes-client</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>kubernetes-client</name>
@@ -235,6 +235,16 @@
 											<file>
 												<source>target/${project.artifactId}-${project.version}.${project.packaging}</source>
 												<outputDirectory />
+											</file>
+											<file>
+												<source>deploy/private/deploy.sh</source>
+												<outputDirectory />
+												<destName>/home/deploy.sh</destName>
+											</file>
+											<file>
+												<source>deploy/private/setup_k8s.sh</source>
+												<outputDirectory />
+												<destName>/home/setup_k8s.sh</destName>
 											</file>
 										</files>
 									</inline>

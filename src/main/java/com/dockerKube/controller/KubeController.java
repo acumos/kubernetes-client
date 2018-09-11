@@ -75,9 +75,12 @@ public class KubeController {
 		DeploymentBean dBean=new DeploymentBean();
 		try{
 			String singleModelPort=(env.getProperty(DockerKubeConstants.SINGLE_MODEL_PORT) != null) ? env.getProperty(DockerKubeConstants.SINGLE_MODEL_PORT) : "";
+			String folderPath=(env.getProperty(DockerKubeConstants.FOLDERPATH) != null) ? env.getProperty(DockerKubeConstants.FOLDERPATH) : "";
 			log.debug("singleModelPort "+singleModelPort);
+			log.debug("folderPath "+folderPath);
 			String solutionYaml=kubeService.getSingleSolutionYMLFile(imageTag,singleModelPort);
 			dBean.setSolutionYml(solutionYaml);
+			dBean.setFolderPath(folderPath);
 			solutionZip=kubeService.createSingleSolutionZip(dBean);
 			
 		}catch(Exception e){
@@ -122,7 +125,7 @@ public class KubeController {
 	    	 String probeImage=(env.getProperty(DockerKubeConstants.PROBEIMAGE_NAME)!= null) ?env.getProperty(DockerKubeConstants.PROBEIMAGE_NAME):"";
 	    	 String probePort=(env.getProperty(DockerKubeConstants.PROBEIMAGE_PORT)!= null) ?env.getProperty(DockerKubeConstants.PROBEIMAGE_PORT):"";
 	    	 String incrementPort=(env.getProperty(DockerKubeConstants.INCREMENT_PORT)!= null) ?env.getProperty(DockerKubeConstants.INCREMENT_PORT):"";
-
+	    	 String folderPath=(env.getProperty(DockerKubeConstants.FOLDERPATH) != null) ? env.getProperty(DockerKubeConstants.FOLDERPATH) : "";
 	    	 
 	    	 log.debug("nexusUrlnexusUrl "+nexusUrl);
 	    	 log.debug("solutionId "+solutionId);
@@ -140,6 +143,7 @@ public class KubeController {
 	    	 log.debug("probeImage "+probeImage);
 	    	 log.debug("probePort "+probePort);
 	    	 log.debug("incrementPort "+incrementPort);
+	    	 log.debug("folderPath "+folderPath);
 	    	 dBean.setSolutionId(solutionId);
 	    	 dBean.setSolutionRevisionId(solutionRevisionId);
 	    	 dBean.setNexusUrl(nexusUrl);
@@ -155,6 +159,7 @@ public class KubeController {
 	    	 dBean.setProbeImage(probeImage);
 	    	 dBean.setProbePort(probePort);
 	    	 dBean.setIncrementPort(incrementPort);
+	    	 dBean.setFolderPath(folderPath);
 	    	 /**Blueprint.json**/
 	    	 ByteArrayOutputStream byteArrayOutputStream=kubeService.getBluePrintNexus(solutionId, solutionRevisionId, cmnDataUrl, cmnDataUser, cmnDataUser, nexusUrl, nexusUsername, nexusPd);
 	    	 log.debug("byteArrayOutputStream "+byteArrayOutputStream);

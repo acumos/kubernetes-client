@@ -64,6 +64,7 @@ public class CommonUtil {
 	 */
 	public String getFileDetails(String fileDetails) throws Exception{
 		String content="";
+		logger.debug("fileDetails "+fileDetails);
 		BufferedReader reader = new BufferedReader(new FileReader(fileDetails));
 		StringBuilder stringBuilder = new StringBuilder();
 		String line = null;

@@ -44,6 +44,13 @@ public class DeploymentBean {
 	private String nginxImage;
 	private String nginxPort;
 	private String incrementPort;
+	private String folderPath;
+	public String getFolderPath() {
+		return folderPath;
+	}
+	public void setFolderPath(String folderPath) {
+		this.folderPath = folderPath;
+	}
 	private List<ContainerBean> containerBeanList;
 	
 	

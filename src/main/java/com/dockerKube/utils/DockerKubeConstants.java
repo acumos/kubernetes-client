@@ -181,5 +181,6 @@ public class DockerKubeConstants {
 	public static final String NGINXIMAGE_NAME="kube.nginxImageName";
 	public static final String INCREMENT_PORT="kube.incrementPort";
 	public static final String SINGLE_MODEL_PORT="kube.singleModelPort";
+	public static final String FOLDERPATH="kube.folderPath";
 	
 }
