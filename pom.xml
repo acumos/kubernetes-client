@@ -5,16 +5,16 @@
 
 	<groupId>com.dockerKube</groupId>
 	<artifactId>kubernetes-client</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.3-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>kubernetes-client</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Acumos kubernetes deployment feature</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.4.RELEASE</version>
+		<version>1.5.10.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -22,6 +22,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
+		<start-class>com.dockerKube.kubernetesclient.KubernetesClientApplication</start-class>
 		<skipTests>false</skipTests>
 		<!-- Jenkins invokes mvn with argument -Dbuild.number=${BUILD_NUMBER} -->
 		<build.number>0</build.number>
@@ -47,7 +48,7 @@
          <dependency>
 			<groupId>org.acumos.common-dataservice</groupId>
 			<artifactId>cmn-data-svc-client</artifactId>
-			<version>1.16.1</version>
+			<version>1.18.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.acumos.acumos-nexus-client</groupId>
@@ -172,7 +173,7 @@
 					<execution>
 						<phase>package</phase>
 						 <goals>
-							<goal>single</goal>
+							<goal>attached</goal>
 						</goals> 
 						<configuration>
 							<descriptorRefs>
@@ -251,7 +252,7 @@
 								</assembly>
 								<cmd>
 									<!-- CDATA prevents Eclipse from breaking/reformatting the line -->
-									<shell><![CDATA[java -Xms128m -Xmx512m -Djava.security.egd=file:/dev/./urandom -jar /maven/${project.artifactId}-${project.version}.${project.packaging}]]></shell>
+									<shell><![CDATA[cd /maven; java -Xms128m -Xmx512m -Djava.security.egd=file:/dev/./urandom -jar ${project.artifactId}-${project.version}.${project.packaging}]]></shell>
 								</cmd>
 							</build>
 						</image>
