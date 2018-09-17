@@ -251,7 +251,6 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 	    Blueprint bluePrintProbe=null;
 		DataBrokerBean dataBrokerBean=null;
 		ParseJSON parseJson=new ParseJSON();
-		String solutionYaml=null;
 		CommonUtil cutil=new CommonUtil();
 		String solutionYml="";
 		List<DockerInfo> dockerInfoList=new ArrayList<DockerInfo>();
@@ -318,7 +317,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 			
 		}
 		logger.debug("Final solutionYml "+solutionYml);
-		dBean.setSolutionYml(solutionYaml);
+		dBean.setSolutionYml(solutionYml);
 		if(dockerInfoList!=null && dockerInfoList.size() > 0){
 			ObjectMapper objMapper = new ObjectMapper();
 			String dockerJson=objMapper.writeValueAsString(dockerInfoList);
