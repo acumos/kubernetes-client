@@ -43,6 +43,7 @@ import com.dockerKube.beans.ContainerBean;
 import com.dockerKube.beans.DeploymentBean;
 import com.dockerKube.beans.DeploymentKubeBean;
 import com.dockerKube.beans.DockerInfo;
+import com.dockerKube.beans.MLSolutionBean;
 import com.dockerKube.controller.KubeController;
 import com.dockerKube.parsebean.Blueprint;
 import com.dockerKube.parsebean.DataBrokerBean;
@@ -55,8 +56,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import org.acumos.cds.domain.MLPSolution;
+import org.acumos.cds.CodeNameType;
+import org.acumos.cds.domain.MLPCodeNamePair;
 
 @Service
 public class KubeServiceImpl implements KubeService  {
@@ -79,7 +83,79 @@ public class KubeServiceImpl implements KubeService  {
 		logger.debug("getClient End");
 		return client;
 	}
-	
+	public byte[] singleSolutionDetails(DeploymentBean dBean,String imageTag,String singleModelPort)throws Exception{
+		logger.debug("singleSolutionDetails start");
+		logger.debug("imageTag "+imageTag +" singleModelPort "+singleModelPort);
+		byte[] solutionZip=null;
+		String solutionYaml=getSingleSolutionYMLFile(imageTag,singleModelPort,dBean);
+		dBean.setSolutionYml(solutionYaml);
+		logger.debug("solutionYaml "+solutionYaml);
+		solutionZip=createSingleSolutionZip(dBean);
+		logger.debug("singleSolutionDetails End");
+		return solutionZip;
+	}
+	public byte[] compositeSolutionDetails(DeploymentBean dBean)throws Exception{
+		logger.debug("compositeSolutionDetails start");
+		byte[] solutionZip=null;
+		List<ContainerBean> contList=null;
+		ParseJSON parseJson=new ParseJSON();
+		/**Blueprint.json**/
+	   	 ByteArrayOutputStream byteArrayOutputStream=getBluePrintNexus(dBean.getSolutionId(), dBean.getSolutionRevisionId(), dBean.getCmnDataUrl(), 
+	   			dBean.getCmnDataUser(), dBean.getCmnDataPd(), dBean.getNexusUrl(), dBean.getNexusUserName(), dBean.getNexusPd());
+	   	 logger.debug("byteArrayOutputStream "+byteArrayOutputStream);
+	   	 dBean.setBluePrintjson(byteArrayOutputStream.toString());
+	   	 /**Proto file code**/
+	   	 contList=parseJson.getProtoDetails(byteArrayOutputStream.toString());
+	   	 logger.debug("contList "+contList);
+	   	 dBean.setContainerBeanList(contList);
+	   	 getprotoDetails(dBean.getContainerBeanList(),dBean);
+	   	 logger.debug("Proto Details");
+	   	 /**DataBroker**/
+	   	 getDataBrokerFile(dBean.getContainerBeanList(), dBean,byteArrayOutputStream.toString());
+	   	 logger.debug("DataBrokerFile");
+	   	 /**SolutionYml and Datainfo json**/
+	   	 getSolutionYMLFile(dBean,byteArrayOutputStream.toString());
+	   	 logger.debug("SolutionYMLFile");
+	   	 /**Deploy.sh **/
+	   	 /**Create Zip**/
+	   	 solutionZip=createCompositeSolutionZip(dBean);
+		 logger.debug("compositeSolutionDetails End");
+		return solutionZip;
+	}
+	public String getSingleImageData(String solutionId,String revisionId,String datasource,String userName,String dataPd)throws Exception{
+		logger.debug("Start getSingleImageData");
+		String imageTag="";
+		CommonDataServiceRestClientImpl cmnDataService=getClient(datasource,userName,dataPd);
+		List<MLPArtifact> mlpSolutionRevisions = null;
+		mlpSolutionRevisions = cmnDataService.getSolutionRevisionArtifacts(solutionId, revisionId);
+		if(mlpSolutionRevisions != null) {
+			for (MLPArtifact artifact : mlpSolutionRevisions) {
+				String[] st = artifact.getUri().split("/");
+				String name = st[st.length-1];
+				artifact.setName(name);
+				logger.debug("ArtifactTypeCode" +artifact.getArtifactTypeCode());
+				logger.debug("URI" +artifact.getUri());
+				if(artifact.getArtifactTypeCode()!=null && artifact.getArtifactTypeCode().equalsIgnoreCase("DI")){
+					imageTag=artifact.getUri();
+				}
+			}
+		}
+		 
+		logger.debug("End getSingleImageData imageTag"+imageTag);
+		return imageTag;
+	}
+	public String getSolutionCode(String solutionId,String datasource,String userName,String dataPd) throws Exception {
+		logger.debug("getSolution start");
+		String toolKitTypeCode="";
+		CommonDataServiceRestClientImpl cmnDataService=getClient(datasource,userName,dataPd);
+		MLPSolution mlpSolution = cmnDataService.getSolution(solutionId);
+			if (mlpSolution != null) {
+				logger.debug("mlpSolution.getToolkitTypeCode() "+mlpSolution.getToolkitTypeCode());
+				toolKitTypeCode=mlpSolution.getToolkitTypeCode();
+			}
+		logger.debug("getSolution End toolKitTypeCode" +toolKitTypeCode);	
+	  return toolKitTypeCode;
+	 }	
 	/** nexusArtifactClient method is used to get connection from nexus
 	 * @param nexusUrl
 	 *             - url of nexus
@@ -257,7 +333,8 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		ByteArrayOutputStream bOutput = new ByteArrayOutputStream(12);
 		dataBrokerBean=parseJson.getDataBrokerContainer(jsonString);
 		bluePrintProbe=parseJson.jsonFileToObject(jsonString,dataBrokerBean);
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(Feature.WRITE_DOC_START_MARKER));
+		//ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(Feature.WRITE_DOC_START_MARKER));
+		//ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 		List<DeploymentKubeBean> deploymentKubeBeanList=parseJson.parseJsonFileImageMap(jsonString);
 		ArrayList<ProbeIndicator> probeIndicatorList =bluePrintProbe.getProbeIndicator();
 		ProbeIndicator prbIndicator = null;
@@ -275,7 +352,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 			deploymentKubeBeanList.add(probeNginxBean);
 		}
 		DeploymentKubeBean depBlueprintBean=new DeploymentKubeBean();
-		depBlueprintBean.setContainerName(DockerKubeConstants.BLUEPRINT_CONTAINER_NAME);
+		depBlueprintBean.setContainerName(DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
 		depBlueprintBean.setImage(dBean.getBluePrintImage());
 		depBlueprintBean.setImagePort(dBean.getBluePrintPort());
 		depBlueprintBean.setNodeType(DockerKubeConstants.BLUEPRINT_CONTAINER_NAME);
@@ -292,16 +369,24 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 					        && depBen.getNodeType()!=null && !"".equals(depBen.getNodeType())){
 				
 				String imagePort="";
-				if(depBen.getImagePort()!=null && !"".equals(depBen.getImagePort())){
-					imagePort=depBen.getImagePort();
+				if(depBen.getNodeType()!=null){
+					if(depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER) 
+							|| depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.DATABROKER_NAME) 
+							|| depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
+						imagePort="";
+					}else{
+						imagePort=String.valueOf(contPort);
+						contPort++;
+					}
 				}else{
 					imagePort=String.valueOf(contPort);
 					contPort++;
 				}
+				
 				logger.debug("imagePort "+imagePort);
-				String serviceYml=getCompositeSolutionService(depBen.getContainerName(),String.valueOf(imagePort));
+				String serviceYml=getCompositeSolutionService(depBen.getContainerName(),imagePort,depBen.getNodeType(),dBean);
 				String deploymentYml=getCompositeSolutionDeployment(depBen.getImage(),depBen.getContainerName(),
-						String.valueOf(imagePort),depBen.getNodeType());
+						imagePort,depBen.getNodeType(),dBean);
 				logger.debug("serviceYml "+serviceYml);
 				logger.debug("deploymentYml "+deploymentYml);
 				solutionYml=solutionYml+serviceYml;
@@ -401,7 +486,9 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 				        	    String protoFileName=contbean.getProtoUriPath().substring(index+1);
 				        	    bOutput = new ByteArrayOutputStream(12);
 								bOutput.write(contbean.getProtoUriDetails().getBytes());
-				        	    hmap.put(contbean.getProtoUriPath(), bOutput);
+								String protoFolderName="microservice"+"/"+contbean.getContainerName()+"/"+"model.proto";
+				        	    logger.debug(protoFolderName+"  "+protoFolderName);
+				        	    hmap.put(protoFolderName, bOutput);
 				        	    logger.debug(contbean.getProtoUriPath()+" "+bOutput);
 							}
 							j++;
@@ -445,11 +532,11 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
    * @throws Exception
    *              - exception for method
    */
-public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)throws Exception{
+public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,DeploymentBean dBean)throws Exception{
 	    logger.debug("getSingleSolutionYMLFile Start");
 		String solutionYaml="";
-		String serviceYml=getSingleSolutionService(singleModelPort);
-		String deploymentYml=getSingleSolutionDeployment(imageTag,singleModelPort);
+		String serviceYml=getSingleSolutionService(singleModelPort,dBean);
+		String deploymentYml=getSingleSolutionDeployment(imageTag,dBean);
 		solutionYaml=serviceYml;
 		solutionYaml=solutionYaml+deploymentYml;
 		logger.debug("solutionYaml "+solutionYaml);
@@ -464,20 +551,21 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
  * @throws Exception
  *               - exception for method
  */
-  public String getSingleSolutionService(String modelPort)throws Exception{
+  public String getSingleSolutionService(String modelPort,DeploymentBean dBean)throws Exception{
 	  logger.debug("getSingleSolutionService Start");
 	    String serviceYml="";
 	    ObjectMapper objectMapper = new ObjectMapper();
-	    YAMLMapper yamlMapper = new YAMLMapper();
+	    YAMLMapper yamlMapper = new YAMLMapper(new YAMLFactory().configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true));
 	    ObjectNode apiRootNode = objectMapper.createObjectNode();
-	    apiRootNode.put(DockerKubeConstants.APIVERSION_YML, DockerKubeConstants.V_YML);
-	    
-	    ObjectNode kindDataNode = objectMapper.createObjectNode();
-	    kindDataNode.put(DockerKubeConstants.KIND_YML, DockerKubeConstants.SERVICE_YML);
+	    apiRootNode.put(DockerKubeConstants.APIVERSION_YML,DockerKubeConstants.V_YML);
+	   	    
+	    /*ObjectNode kindDataNode = objectMapper.createObjectNode();
+	    kindDataNode.put(DockerKubeConstants.KIND_YML, DockerKubeConstants.SERVICE_YML);*/
+	    apiRootNode.put(DockerKubeConstants.KIND_YML, DockerKubeConstants.SERVICE_YML);
 	    
 	    ObjectNode metadataNode = objectMapper.createObjectNode();
 		metadataNode.put(DockerKubeConstants.NAMESPACE_YML, DockerKubeConstants.ACUMOS_YML);
-		metadataNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.MYMODEL_SERVICE_YML);
+		metadataNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.MYMODEL_YML);
 		apiRootNode.set(DockerKubeConstants.METADATA_YML, metadataNode);
 		
 		ObjectNode specNode = objectMapper.createObjectNode();
@@ -485,15 +573,15 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		selectorNode.put(DockerKubeConstants.APP_YML, DockerKubeConstants.MYMODEL_YML);
 		specNode.set(DockerKubeConstants.SELECTOR_YML, selectorNode);
-		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.NODE_PORT_YML);
+		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.NODE_TYPE_PORT_YML);
 		
 		ArrayNode portsArrayNode = specNode.arrayNode();
 		ObjectNode portsNode = objectMapper.createObjectNode();
 		
-		portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.MYMODEL_YML);
-		portsNode.put(DockerKubeConstants.NODEPORT_YML, modelPort);
-		portsNode.put(DockerKubeConstants.PORT_YML, modelPort);
-		portsNode.put(DockerKubeConstants.TARGETPORT_YML, modelPort);
+		portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
+		portsNode.put(DockerKubeConstants.NODEPORT_YML, dBean.getSingleNodePort());
+		portsNode.put(DockerKubeConstants.PORT_YML, dBean.getSingleModelPort());
+		portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBean.getSingleTargetPort());
 		portsArrayNode.add(portsNode);
 		specNode.set(DockerKubeConstants.PORTS_YML, portsArrayNode);
 		
@@ -511,12 +599,13 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
    * @throws Exception
    *               - exception for method
    */
-  public String getSingleSolutionDeployment(String imageTag,String modelPort)throws Exception{
+  public String getSingleSolutionDeployment(String imageTag,DeploymentBean dBean)throws Exception{
 	    logger.debug("getSingleSolutionDeployment Start");
 	    ObjectMapper objectMapper = new ObjectMapper();
-	    YAMLMapper yamlMapper = new YAMLMapper();
+	    YAMLMapper yamlMapper = new YAMLMapper(new YAMLFactory().configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true));
 	    
 	    ObjectNode kindRootNode = objectMapper.createObjectNode();
+	    kindRootNode.put(DockerKubeConstants.APIVERSION_DEP_YML, DockerKubeConstants.APPS_V1_DEP_YML);
 	    kindRootNode.put(DockerKubeConstants.KIND_DEP_YML, DockerKubeConstants.DEPLOYMENT_DEP_YML);
 	    
 	    ObjectNode metadataNode = objectMapper.createObjectNode();
@@ -555,12 +644,17 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
 		ArrayNode portsArrayNode = containerNode.arrayNode();
 		ObjectNode portsNode  = objectMapper.createObjectNode();
 		portsNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
-		portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, modelPort);
+		portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getSingleModelPort());
 		
 		portsArrayNode.add(portsNode);
 		containerArrayNode.add(containerNode);
 		containerNode.set(DockerKubeConstants.PORTS_DEP_YML, portsArrayNode);
 		
+		ObjectNode imagePullSecretsNode = objectMapper.createObjectNode();
+		ArrayNode imageSecretArrayNode = containerNode.arrayNode();
+		imagePullSecretsNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.ACUMOS_REGISTRY_DEP_YML);
+		imageSecretArrayNode.add(imagePullSecretsNode);
+		specTempNode.set(DockerKubeConstants.IMAGEPULLSECRETS_DEP_YML, imageSecretArrayNode);
 		
 		specTempNode.set(DockerKubeConstants.CONTAINERS_DEP_YML, containerArrayNode);
 		
@@ -588,34 +682,79 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
    * @throws Exception
    *               - exception for method
    */
-  public String getCompositeSolutionService(String imageName,String imagePort)throws Exception{
+  public String getCompositeSolutionService(String containerName,String imagePort,String nodeType,DeploymentBean dBen)throws Exception{
 	  logger.debug("getSingleSolutionService Start");
 	    String serviceYml="";
+	    
 	    ObjectMapper objectMapper = new ObjectMapper();
-	    YAMLMapper yamlMapper = new YAMLMapper();
+	    YAMLMapper yamlMapper = new YAMLMapper(new YAMLFactory().configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true));
 	    ObjectNode apiRootNode = objectMapper.createObjectNode();
 	    apiRootNode.put(DockerKubeConstants.APIVERSION_YML, DockerKubeConstants.V_YML);
 	    apiRootNode.put(DockerKubeConstants.KIND_YML, DockerKubeConstants.SERVICE_YML);
 	    
 	    ObjectNode metadataNode = objectMapper.createObjectNode();
 		metadataNode.put(DockerKubeConstants.NAMESPACE_YML, DockerKubeConstants.ACUMOS_YML);
-		metadataNode.put(DockerKubeConstants.NAME_YML, imageName);//
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+		    metadataNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){  
+			metadataNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.DATABROKER_NAME_YML);
+		}else{
+			metadataNode.put(DockerKubeConstants.NAME_YML, containerName);
+		}
 		apiRootNode.set(DockerKubeConstants.METADATA_YML, metadataNode);
 		
 		ObjectNode specNode = objectMapper.createObjectNode();
 		
 		ObjectNode selectorNode = objectMapper.createObjectNode();
-		selectorNode.put(DockerKubeConstants.APP_YML, imageName);
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+		   selectorNode.put(DockerKubeConstants.APP_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){ 
+			selectorNode.put(DockerKubeConstants.APP_YML, DockerKubeConstants.DATABROKER_NAME_YML);
+		}else{
+			selectorNode.put(DockerKubeConstants.APP_YML, containerName);
+		}
 		specNode.set(DockerKubeConstants.SELECTOR_YML, selectorNode);
-		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.NODE_PORT_YML);
-		
+		if(nodeType!=null && (nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER) 
+				|| nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER) || nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME))){
+		  specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.NODE_TYPE_PORT_YML);
+		}else{
+			specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.CLUSTERIP_YML);
+		}
 		ArrayNode portsArrayNode = specNode.arrayNode();
 		ObjectNode portsNode = objectMapper.createObjectNode();
 		
-		portsNode.put(DockerKubeConstants.NAME_YML, imageName);
-		portsNode.put(DockerKubeConstants.NODEPORT_YML, imagePort);
-		portsNode.put(DockerKubeConstants.PORT_YML, imagePort);
-		portsNode.put(DockerKubeConstants.TARGETPORT_YML, imagePort);
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+		  portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.NAME_MCAPI_YML);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){ 
+			portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.NAME_DATABROKER_YML);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){ 
+			//NA
+		}else{
+			portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
+		}
+		
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+		 portsNode.put(DockerKubeConstants.NODEPORT_YML, dBen.getBluePrintNodePort());
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
+			portsNode.put(DockerKubeConstants.NODEPORT_YML, dBen.getDataBrokerNodePort());
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){	
+			portsNode.put(DockerKubeConstants.NODEPORT_YML, dBen.getProbeNodePort());
+		}
+		
+		
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+			portsNode.put(DockerKubeConstants.PORT_YML, dBen.getBluePrintPort());
+		    portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBen.getBluePrintNodePort());
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
+			portsNode.put(DockerKubeConstants.PORT_YML, dBen.getDataBrokerModelPort());
+			portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBen.getDataBrokerTargetPort());
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
+			portsNode.put(DockerKubeConstants.PORT_YML, dBen.getProbeModelPort());
+			portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBen.getProbeTargetPort());
+		}else{
+			portsNode.put(DockerKubeConstants.PORT_YML, imagePort);
+			portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBen.getMlTargetPort());
+		}
 		portsArrayNode.add(portsNode);
 		specNode.set(DockerKubeConstants.PORTS_YML, portsArrayNode);
 		apiRootNode.set(DockerKubeConstants.SPEC_YML, specNode);
@@ -637,10 +776,10 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
    * @throws Exception
    *               - exception for method
    */
-  public String getCompositeSolutionDeployment(String imageTag,String imageName,String imagePort,String nodeType)throws Exception{
+  public String getCompositeSolutionDeployment(String imageTag,String containerName,String imagePort,String nodeType,DeploymentBean dBean)throws Exception{
 	    logger.debug("getSingleSolutionDeployment Start");
 	    ObjectMapper objectMapper = new ObjectMapper();
-	    YAMLMapper yamlMapper = new YAMLMapper();
+	    YAMLMapper yamlMapper = new YAMLMapper(new YAMLFactory().configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true));
 	    
 	    ObjectNode kindRootNode = objectMapper.createObjectNode();
 	    kindRootNode.put(DockerKubeConstants.APIVERSION_DEP_YML, DockerKubeConstants.APPS_V1_DEP_YML);
@@ -649,10 +788,24 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
 	    
 	    ObjectNode metadataNode = objectMapper.createObjectNode();
 		metadataNode.put(DockerKubeConstants.NAMESPACE_DEP_YML, DockerKubeConstants.ACUMOS_DEP_YML);
-		metadataNode.put(DockerKubeConstants.NAME_DEP_YML, imageName);
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+			metadataNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){  
+			metadataNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.DATABROKER_NAME_YML);
+		}else{
+			metadataNode.put(DockerKubeConstants.NAME_DEP_YML, containerName);
+		}
+		
 		
 		ObjectNode labelsNode = objectMapper.createObjectNode();
-		labelsNode.put(DockerKubeConstants.APP_DEP_YML, imageName);
+		
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+			labelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){  
+			labelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.DATABROKER_NAME_YML);	
+		}else{
+			labelsNode.put(DockerKubeConstants.APP_DEP_YML, containerName);
+		}
 		metadataNode.put(DockerKubeConstants.LABELS_DEP_YML, labelsNode);
 		
 		kindRootNode.set(DockerKubeConstants.METADATA_DEP_YML, metadataNode);
@@ -662,7 +815,14 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
 		
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		ObjectNode matchLabelsNode = objectMapper.createObjectNode();
-		matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, imageName);
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+			matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){ 
+			matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.DATABROKER_NAME_YML);
+		}else{
+			matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, containerName);
+		}
+		
 		selectorNode.set(DockerKubeConstants.MATCHLABELS_DEP_YML, matchLabelsNode);
 		
 		specNode.set(DockerKubeConstants.SELECTOR_DEP_YML, selectorNode);
@@ -670,31 +830,83 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
 		ObjectNode templateNode = objectMapper.createObjectNode();
 		ObjectNode metadataTemplateNode = objectMapper.createObjectNode();
 		ObjectNode labelsTemplateNode = objectMapper.createObjectNode();
-		labelsTemplateNode.put(DockerKubeConstants.APP_DEP_YML, imageName);
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+			labelsTemplateNode.put(DockerKubeConstants.APP_DEP_YML,DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
+			labelsTemplateNode.put(DockerKubeConstants.APP_DEP_YML,DockerKubeConstants.DATABROKER_NAME_YML);
+		}else{
+			labelsTemplateNode.put(DockerKubeConstants.APP_DEP_YML, containerName);
+		}
+		
 		metadataTemplateNode.set(DockerKubeConstants.LABELS_DEP_YML, labelsTemplateNode);
 		
 		
 		ObjectNode specTempNode = objectMapper.createObjectNode();
 		ArrayNode containerArrayNode = templateNode.arrayNode();
 		ObjectNode containerNode  = objectMapper.createObjectNode();
-		containerNode.put(DockerKubeConstants.NAME_DEP_YML, imageName);
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+			containerNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
+			containerNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.DATABROKER_NAME_YML);
+		}else{
+			containerNode.put(DockerKubeConstants.NAME_DEP_YML, containerName);
+		}
+		
 		containerNode.put(DockerKubeConstants.IMAGE_DEP_YML, imageTag);
 		
 		ArrayNode portsArrayNode = containerNode.arrayNode();
 		ObjectNode portsNode  = objectMapper.createObjectNode();
-		portsNode.put(DockerKubeConstants.NAME_DEP_YML, imageName);
-		portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, imagePort);
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+			portsNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.NAME_MCAPI_YML);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
+			//NA
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
+			portsNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.PROBE_UI_YML);
+		}else{
+			portsNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
+		}
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+		   portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getBluePrintPort());
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
+			portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getDataBrokerTargetPort());
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
+			portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getProbeTargetPort());
+		}else{
+			portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getMlTargetPort());
+		}
 		
 		portsArrayNode.add(portsNode);
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
+			ObjectNode portsNode2  = objectMapper.createObjectNode();
+			portsNode2.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.PROBEAPI_NAME);
+			portsNode2.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getProbeApiPort());
+			portsArrayNode.add(portsNode2);
+		}
 		containerArrayNode.add(containerNode);
 		containerNode.set(DockerKubeConstants.PORTS_DEP_YML, portsArrayNode);
 		
 		//BLUEPRINT or DataBroker
-		if(nodeType!=null && (nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER) || nodeType.equalsIgnoreCase(DockerKubeConstants.DATABROKER_NAME))){
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 			ArrayNode volmeMountArrayNode = containerNode.arrayNode();
 			ObjectNode volumeMountNode  = objectMapper.createObjectNode();
 			volumeMountNode.put(DockerKubeConstants.MOUNTPATH_DEP_YML, DockerKubeConstants.PATHLOGS_DEP_YML);
 			volumeMountNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.LOGS_DEP_YML);
+			volmeMountArrayNode.add(volumeMountNode);
+			containerNode.set(DockerKubeConstants.VOLUMEMOUNTS_DEP_YML, volmeMountArrayNode);
+		}
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATABROKER_NAME)){
+			ArrayNode volmeMountArrayNode = containerNode.arrayNode();
+			ObjectNode volumeMountNode  = objectMapper.createObjectNode();
+			volumeMountNode.put(DockerKubeConstants.MOUNTPATH_DEP_YML, DockerKubeConstants.DATABROKER_PATHLOG_DEP_YML);
+			volumeMountNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.DATABROKER_LOGNAME);
+			volmeMountArrayNode.add(volumeMountNode);
+			containerNode.set(DockerKubeConstants.VOLUMEMOUNTS_DEP_YML, volmeMountArrayNode);
+		}
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
+			ArrayNode volmeMountArrayNode = containerNode.arrayNode();
+			ObjectNode volumeMountNode  = objectMapper.createObjectNode();
+			volumeMountNode.put(DockerKubeConstants.MOUNTPATH_DEP_YML, DockerKubeConstants.PROBE_PATHLOG_DEP_YML);
+			volumeMountNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.VOLUME_PROTO_YML);
 			volmeMountArrayNode.add(volumeMountNode);
 			containerNode.set(DockerKubeConstants.VOLUMEMOUNTS_DEP_YML, volmeMountArrayNode);
 		}
@@ -708,16 +920,40 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)th
 		specTempNode.set(DockerKubeConstants.IMAGEPULLSECRETS_DEP_YML, imageSecretArrayNode);
 		specTempNode.set(DockerKubeConstants.CONTAINERS_DEP_YML, containerArrayNode);
 		//BLUEPRINT or DataBroker
-		if(nodeType!=null && (nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER) || nodeType.equalsIgnoreCase(DockerKubeConstants.DATABROKER_NAME))){
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+			ArrayNode volumeArrNode = templateNode.arrayNode();
 			ObjectNode volumeNode  = objectMapper.createObjectNode();
 			volumeNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.LOGS_DEP_YML);
-			ArrayNode hostPathArrayNode = containerNode.arrayNode();
+			volumeArrNode.add(volumeNode);
 			ObjectNode hostPathNode  = objectMapper.createObjectNode();
 			hostPathNode.put(DockerKubeConstants.PATH_DEP_YML, DockerKubeConstants.ACUMOSPATHLOG_DEP_YML);
-			hostPathArrayNode.add(hostPathNode);
-			volumeNode.put(DockerKubeConstants.HOSTPATH_DEP_YML, hostPathArrayNode);
+			volumeNode.put(DockerKubeConstants.HOSTPATH_DEP_YML, hostPathNode);
 			specTempNode.put(DockerKubeConstants.RESTARTPOLICY_DEP_YML, DockerKubeConstants.ALWAYS_DEP_YML);
-			specTempNode.set(DockerKubeConstants.VOLUMES_DEP_YML, volumeNode);
+			specTempNode.set(DockerKubeConstants.VOLUMES_DEP_YML, volumeArrNode);
+		}
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATABROKER_NAME)){
+			
+			ArrayNode volumeArrNode = templateNode.arrayNode();
+			ObjectNode volumeNode  = objectMapper.createObjectNode();
+			volumeNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.DATABROKER_LOGNAME);
+			volumeArrNode.add(volumeNode);
+			ObjectNode hostPathNode  = objectMapper.createObjectNode();
+			hostPathNode.put(DockerKubeConstants.PATH_DEP_YML, DockerKubeConstants.DATABROKER_PATHLOG_DEP_YML);
+			volumeNode.put(DockerKubeConstants.HOSTPATH_DEP_YML, hostPathNode);
+			specTempNode.put(DockerKubeConstants.RESTARTPOLICY_DEP_YML, DockerKubeConstants.ALWAYS_DEP_YML);
+			specTempNode.set(DockerKubeConstants.VOLUMES_DEP_YML, volumeArrNode);
+		}
+       if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
+			
+			ArrayNode volumeArrNode = templateNode.arrayNode();
+			ObjectNode volumeNode  = objectMapper.createObjectNode();
+			volumeNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.VOLUME_PROTO_YML);
+			volumeArrNode.add(volumeNode);
+			ObjectNode hostPathNode  = objectMapper.createObjectNode();
+			hostPathNode.put(DockerKubeConstants.PATH_DEP_YML, DockerKubeConstants.PROBE_PATHLOG_DEP_YML);
+			volumeNode.put(DockerKubeConstants.HOSTPATH_DEP_YML, hostPathNode);
+			specTempNode.put(DockerKubeConstants.RESTARTPOLICY_DEP_YML, DockerKubeConstants.ALWAYS_DEP_YML);
+			specTempNode.set(DockerKubeConstants.VOLUMES_DEP_YML, volumeArrNode);
 		}
 		//Finish
 		
