@@ -37,5 +37,9 @@ public interface KubeService {
 	public void getSolutionYMLFile(DeploymentBean dBean,String jsonString)throws Exception;
 	public byte[] createCompositeSolutionZip(DeploymentBean dBean)throws Exception;
 	public byte[] createSingleSolutionZip(DeploymentBean dBean)throws Exception;
-	public String getSingleSolutionYMLFile(String imageTag,String singleModelPort)throws Exception;
+	public String getSolutionCode(String solutionId,String datasource,String userName,String dataPd) throws Exception;
+	public byte[] singleSolutionDetails(DeploymentBean dBean,String imageTag,String singleModelPort)throws Exception;
+	public byte[] compositeSolutionDetails(DeploymentBean dBean)throws Exception;
+	public String getSingleImageData(String solutionId,String revisionId,String datasource,String userName,String dataPd)throws Exception;
+	
 }
