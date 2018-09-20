@@ -142,7 +142,7 @@ public class KubeController {
 	   	 log.debug("singleTargetPort "+singleTargetPort);
 	   	try{
 	   	  String solutionToolKitType=kubeService.getSolutionCode(solutionId, cmnDataUrl, cmnDataUser, cmnDataPd);
-	   	  if(solutionToolKitType!=null && !"".equals(solutionToolKitType) && "CP".equalsIgnoreCase(solutionToolKitType)){
+	   	  if(solutionToolKitType!=null && !"".equals(solutionToolKitType) && !"CP".equalsIgnoreCase(solutionToolKitType)){
 	   		log.debug("Single Solution Details Start");
 	   		String imageTag=kubeService.getSingleImageData(solutionId, revisionId, cmnDataUrl, cmnDataUser, cmnDataPd);
 	   		solutionZip=kubeService.singleSolutionDetails(dBean, imageTag, singleModelPort);
