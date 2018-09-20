@@ -37,6 +37,8 @@ public class DockerKubeConstants {
 	public static final String TYPE_YML="type";
 	public static final String NODEPORT_YML="nodePort";
 	public static final String NODE_PORT_YML="nodePort";
+	public static final String NODE_TYPE_PORT_YML="NodePort";
+	public static final String CLUSTERIP_YML="ClusterIP";
 	public static final String PORT_YML="port";
 	public static final String TARGETPORT_YML="targetPort";
 	public static final String PORTS_YML="ports";
@@ -58,6 +60,8 @@ public class DockerKubeConstants {
 	public static final String SELECTOR_DEP_YML="selector";
 	public static final String IMAGE_DEP_YML="image";
 	public static final String PROTOBUF_API_DEP_YML="protobuf-api";
+	public static final String PROBE_UI_YML="probe-ui";
+	
 	public static final String CONTAINERPORT_DEP_YML="containerPort";
 	public static final String PORTS_DEP_YML="ports";
 	public static final String CONTAINERS_DEP_YML="containers";
@@ -65,6 +69,9 @@ public class DockerKubeConstants {
 	public static final String TEMPLATE_DEP_YML="template";
 	public static final String MOUNTPATH_DEP_YML="mountPath";
 	public static final String PATHLOGS_DEP_YML="/logs";
+	public static final String DATABROKER_PATHLOG_DEP_YML="/var/acumos/datasource";
+	public static final String DATABROKER_LOGNAME="datasource";
+	public static final String PROBE_PATHLOG_DEP_YML="/var/acumos/";
 	public static final String LOGS_DEP_YML="logs";
 	public static final String VOLUMEMOUNTS_DEP_YML="volumeMounts";
 	public static final String ACUMOS_REGISTRY_DEP_YML="acumos-registry";
@@ -75,11 +82,16 @@ public class DockerKubeConstants {
 	public static final String RESTARTPOLICY_DEP_YML="restartPolicy";
 	public static final String ALWAYS_DEP_YML="Always";
 	public static final String VOLUMES_DEP_YML="volumes";
+	public static final String NAME_MCAPI_YML="mc-api";
+	public static final String NAME_DATABROKER_YML="databroker-api";
+	public static final String DATABROKER_NAME_YML= "databroker";
+	public static final String VOLUME_PROTO_YML= "proto-files";
 	
 	public static final String APPLICATION_JSON="application/json";
 	public static final String BLUEPRINT_CONTAINER_NAME= "BluePrintContainer";
+	public static final String BLUEPRINT_MODELCONNECTOR_NAME= "modelconnector";
 	public static final String SINGLE_CONTAINER_NAME= "SingleImageContainer";
-	public static final String PROBE_CONTAINER_NAME= "Probe";
+	public static final String PROBE_CONTAINER_NAME= "probe";
 	public static final String JSON_FILE_NAME= "blueprint.json";
 	public static final String AZURE_AUTH_LOCATION= "AZURE_AUTH_LOCATION";
 	public static final String AZURE_AUTH_LOCATION_NEXT= "AZURE_AUTH_LOCATION_2";
@@ -93,6 +105,8 @@ public class DockerKubeConstants {
 	public static final String PUT_BLUEPRINT_INFO_URL= "putBlueprint";
 	public static final String CONFIG_DB_URL= "configDB";
 	public static final String DATABROKER_NAME= "DataBroker";
+	public static final String PROBEAPI_NAME="probe-api";
+	
 	public static final String DEPLOYMENT_PROCESS= "DP";
 	public static final String DEPLOYMENT_FAILED= "FA";
 	public static final String DATA_BROKER_CSV_FILE= "csv";
@@ -161,18 +175,19 @@ public class DockerKubeConstants {
 	public static final String KUBE_SOLUTION="solution.zip";
 	public static final String KUBE_DEPLOY_SH="deploy.sh";
 	public static final String KUBE_K8S_SH="setup_k8s.sh";
-	public static final String KUBE_BLUEPRINT_JSON="Blueprint.json";
-	public static final String KUBE_DOCKERINFO_JSON="DockerInfo.json";
-	public static final String KUBE_SOLUTION_YML="solution.yml";
-	public static final String KUBE_DATABROKER_JSON="DataBroker.json";
+	public static final String KUBE_BLUEPRINT_JSON="blueprint.json";
+	public static final String KUBE_DOCKERINFO_JSON="dockerinfo.json";
+	public static final String KUBE_SOLUTION_YML="solution.yaml";
+	public static final String KUBE_DATABROKER_JSON="databroker.json";
 	public static final String NGINX_CONTAINER="Nginx";
 	public static final String BLUEPRINT_IMAGENAME_PROP="blueprint.ImageName";
 	public static final String BLUEPRINT_NAME_PROP="blueprint.name";
 	public static final String BLUEPRINT_PORT_PROP="blueprint.port";
+	public static final String BLUEPRINT_NODEPORT_PROP="blueprint.nodePort";
 	public static final String NEXUS_URL_PROP="nexus.url";
 	public static final String NEXUS_USERNAME_PROP="nexus.username";
 	public static final String NEXUS_PD_PROP="nexus.password";
-	public static final String CMNDATASVC_CMNDATASVCENDPOINURL_PROP="cmndatasvc.cmndatasvcendpoinurl";
+	public static final String CMNDATASVC_CMNDATASVCENDPOINTURL_PROP="cmndatasvc.cmndatasvcendpointurl";
 	public static final String CMNDATASVC_CMNDATASVCUSER_PROP="cmndatasvc.cmndatasvcuser";
 	public static final String CMNDATASVC_CMNDATASVCPD_PROP="cmndatasvc.cmndatasvcpwd";
 	public static final String KUBE_IP="kube.ip";
@@ -181,6 +196,19 @@ public class DockerKubeConstants {
 	public static final String NGINXIMAGE_NAME="kube.nginxImageName";
 	public static final String INCREMENT_PORT="kube.incrementPort";
 	public static final String SINGLE_MODEL_PORT="kube.singleModelPort";
+	public static final String SINGLE_NODE_PORT="kube.singleNodePort";
+	public static final String SINGLE_TARGET_PORT="kube.singleTargetPort";
+	
+	public static final String DATABROKER_MODEL_PORT="kube.dataBrokerModelPort";
+	public static final String DATABROKER_NODE_PORT="kube.dataBrokerNodePort";
+	public static final String DATABROKER_TARGET_PORT="kube.dataBrokerTargetPort";
+	
+	public static final String PROBE_MODEL_PORT="probe.probeModelPort";
+	public static final String PROBE_NODE_PORT="probe.probeNodePort";
+	public static final String PROBE_TARGET_PORT="probe.probeTargetPort";
+	public static final String PROBE_API_PORT="probe.probeApiPort";
+	
 	public static final String FOLDERPATH="kube.folderPath";
+	public static final String ML_TARGET_PORT="kube.mlTargetPort";
 	
 }

@@ -56,27 +56,6 @@ public class Node implements Serializable {
 		super();
 	}
 
-	/**
-	 * @param operationSignatureList
-	 *            List of operations supported by the node
-	 * @param mappingTable
-	 *            Required by the data broker
-	 * @param protoUri
-	 *            Url of protofile : required to be passed to the Probe
-	 * @param container
-	 *            Name of the container
-	 * @param image
-	 *            Url of the docker image of the named node in Nexus. Information
-	 *            consumed by deployer
-	 * @param dataSources
-	 *            Required by the data broker
-	 * @param script
-	 *            Required by the data broker
-	 * @param nodeType
-	 *            Type of the node: DataMapper or MLModel or DataBroker or
-	 *            TrainingClient or Probe
-	 * 
-	 */
 	public Node(String container, String nodeType, String image, String protoUri,
 			ArrayList<OperationSignatureList> operationSignatureList, String script, MappingTable mappingTable,
 			List<DataSource> dataSources,DataBrokerMap dataBrokerMap) {

@@ -45,13 +45,104 @@ public class DeploymentBean {
 	private String nginxPort;
 	private String incrementPort;
 	private String folderPath;
+	private String singleModelPort;
+	private String singleNodePort;
+	private String singleTargetPort;
+	private String bluePrintNodePort;
+	private String mlTargetPort;
+	private String dataBrokerModelPort;
+	private String dataBrokerNodePort;
+	private String dataBrokerTargetPort;
+	private String probeModelPort;
+	private String probeNodePort;
+	private String probeTargetPort;
+	private String probeApiPort;
+	private List<ContainerBean> containerBeanList;
+	
+	
+	public String getProbeModelPort() {
+		return probeModelPort;
+	}
+	public void setProbeModelPort(String probeModelPort) {
+		this.probeModelPort = probeModelPort;
+	}
+	public String getProbeNodePort() {
+		return probeNodePort;
+	}
+	public void setProbeNodePort(String probeNodePort) {
+		this.probeNodePort = probeNodePort;
+	}
+	public String getProbeTargetPort() {
+		return probeTargetPort;
+	}
+	public void setProbeTargetPort(String probeTargetPort) {
+		this.probeTargetPort = probeTargetPort;
+	}
+	public String getProbeApiPort() {
+		return probeApiPort;
+	}
+	public void setProbeApiPort(String probeApiPort) {
+		this.probeApiPort = probeApiPort;
+	}
+	public String getDataBrokerModelPort() {
+		return dataBrokerModelPort;
+	}
+	public void setDataBrokerModelPort(String dataBrokerModelPort) {
+		this.dataBrokerModelPort = dataBrokerModelPort;
+	}
+	public String getDataBrokerNodePort() {
+		return dataBrokerNodePort;
+	}
+	public void setDataBrokerNodePort(String dataBrokerNodePort) {
+		this.dataBrokerNodePort = dataBrokerNodePort;
+	}
+	public String getDataBrokerTargetPort() {
+		return dataBrokerTargetPort;
+	}
+	public void setDataBrokerTargetPort(String dataBrokerTargetPort) {
+		this.dataBrokerTargetPort = dataBrokerTargetPort;
+	}
+	public String getMlTargetPort() {
+		return mlTargetPort;
+	}
+	public void setMlTargetPort(String mlTargetPort) {
+		this.mlTargetPort = mlTargetPort;
+	}
+	public String getBluePrintNodePort() {
+		return bluePrintNodePort;
+	}
+	public void setBluePrintNodePort(String bluePrintNodePort) {
+		this.bluePrintNodePort = bluePrintNodePort;
+	}
+	
+	
+	
+	
+	public String getSingleModelPort() {
+		return singleModelPort;
+	}
+	public void setSingleModelPort(String singleModelPort) {
+		this.singleModelPort = singleModelPort;
+	}
+	public String getSingleNodePort() {
+		return singleNodePort;
+	}
+	public void setSingleNodePort(String singleNodePort) {
+		this.singleNodePort = singleNodePort;
+	}
+	public String getSingleTargetPort() {
+		return singleTargetPort;
+	}
+	public void setSingleTargetPort(String singleTargetPort) {
+		this.singleTargetPort = singleTargetPort;
+	}
 	public String getFolderPath() {
 		return folderPath;
 	}
 	public void setFolderPath(String folderPath) {
 		this.folderPath = folderPath;
 	}
-	private List<ContainerBean> containerBeanList;
+	
 	
 	
 	public String getIncrementPort() {
