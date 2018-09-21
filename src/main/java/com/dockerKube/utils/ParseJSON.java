@@ -848,4 +848,41 @@ public class ParseJSON {
 				
 			log.debug("sequenceJsonParseProbe End");					
 		}
+	 public boolean checkProbeIndicator(String jsonString)  throws  Exception {
+		   log.debug("checkProbeIndicator Start");
+		   boolean probeIndicatorValue=false;
+		   String value=null;
+		   try {
+				Object obj = new JSONParser().parse(new StringReader(jsonString));
+				JSONObject jo = (JSONObject) obj;
+				JSONArray probeIndicator = (JSONArray) jo.get(DockerKubeConstants.PROBE_INDICATOR);
+				if(probeIndicator == null){
+					probeIndicator = (JSONArray) jo.get(DockerKubeConstants.PROBE_INDOCATOR);
+				}
+				if(probeIndicator!=null){
+					Iterator itr = probeIndicator.iterator();
+					Iterator<Map.Entry> itr1=null;
+					
+					 while (itr.hasNext()) {
+						 itr1 = ((Map) itr.next()).entrySet().iterator();
+				            while (itr1.hasNext()) {
+				                Map.Entry pair = itr1.next();
+				                value = (String)pair.getValue();
+				            }
+					 }
+				} 
+				if(value!=null && value.equalsIgnoreCase("True")) {
+					probeIndicatorValue=true;
+				   } else {				
+					   probeIndicatorValue=false;
+				  }	
+		   } catch (Exception e) {
+			    log.error("checkProbeIndicator failed", e);
+				throw new Exception(e.getMessage());
+			}
+		   log.debug("probeIndicator "+probeIndicatorValue);
+		   log.debug("checkProbeIndicator End");
+		   return probeIndicatorValue;
+				
+	   }
  }

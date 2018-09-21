@@ -324,7 +324,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
    *             - exception for method
    */
   public void getSolutionYMLFile(DeploymentBean dBean,String jsonString)throws Exception{
-	    Blueprint bluePrintProbe=null;
+	    logger.debug("Start getSolutionYMLFile");
 		DataBrokerBean dataBrokerBean=null;
 		ParseJSON parseJson=new ParseJSON();
 		CommonUtil cutil=new CommonUtil();
@@ -332,18 +332,12 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		List<DockerInfo> dockerInfoList=new ArrayList<DockerInfo>();
 		ByteArrayOutputStream bOutput = new ByteArrayOutputStream(12);
 		dataBrokerBean=parseJson.getDataBrokerContainer(jsonString);
-		bluePrintProbe=parseJson.jsonFileToObject(jsonString,dataBrokerBean);
 		//ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(Feature.WRITE_DOC_START_MARKER));
 		//ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 		List<DeploymentKubeBean> deploymentKubeBeanList=parseJson.parseJsonFileImageMap(jsonString);
-		ArrayList<ProbeIndicator> probeIndicatorList =bluePrintProbe.getProbeIndicator();
-		ProbeIndicator prbIndicator = null;
-		if(probeIndicatorList != null && probeIndicatorList.size() >0) {
-			prbIndicator = probeIndicatorList.get(0);
-		}
-		if (bluePrintProbe.getProbeIndicator() != null && prbIndicator != null && prbIndicator.getValue().equalsIgnoreCase("True") ) {
-			logger.debug("prbIndicator.getValue() "+prbIndicator.getValue());
-			
+		boolean probeIndicator=parseJson.checkProbeIndicator(jsonString);
+		if (probeIndicator) {
+			logger.debug("probeIndicator "+probeIndicator);
 			DeploymentKubeBean probeNginxBean=new DeploymentKubeBean();
 			probeNginxBean.setContainerName(DockerKubeConstants.PROBE_CONTAINER_NAME);
 			probeNginxBean.setImage(dBean.getProbeImage());
@@ -415,7 +409,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 			logger.debug("dataBrokerJson "+dataBrokerJson);
 			dBean.setDataBrokerJson(dataBrokerJson);
 		}
-		
+	logger.debug("End getSolutionYMLFile");
   }
   /** createCompositeSolutionZip method is used to get zip file 
    * @param dBean
@@ -650,7 +644,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		ArrayNode portsArrayNode = containerNode.arrayNode();
 		ObjectNode portsNode  = objectMapper.createObjectNode();
 		portsNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
-		portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getSingleModelPort());
+		portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getSingleTargetPort());
 		
 		portsArrayNode.add(portsNode);
 		containerArrayNode.add(containerNode);
@@ -754,7 +748,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 			portsNode.put(DockerKubeConstants.PORT_YML, dBen.getBluePrintPort());
-		    portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBen.getBluePrintNodePort());
+		    portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBen.getBluePrintPort());
 		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
 			portsNode.put(DockerKubeConstants.PORT_YML, dBen.getDataBrokerModelPort());
 			portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBen.getDataBrokerTargetPort());

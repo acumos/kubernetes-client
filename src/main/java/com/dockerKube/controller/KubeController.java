@@ -108,9 +108,9 @@ public class KubeController {
     	 dBean.setDataBrokerModelPort(dataBrokerModelPort);
     	 dBean.setBluePrintNodePort(bluePrintNodePort);
     	 dBean.setDataBrokerTargetPort(dataBrokerTargetPort);
+    	 dBean.setDataBrokerNodePort(dataBrokerNodePort);
     	 dBean.setProbeModelPort(probeModelPort);
     	 dBean.setProbeNodePort(probeNodePort);
-    	 dBean.setDataBrokerTargetPort(dataBrokerTargetPort);
     	 dBean.setProbeApiPort(probeApiPort);
     	 log.debug("probeModelPort "+probeModelPort);
     	 log.debug("probeNodePort "+probeNodePort);
