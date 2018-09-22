@@ -20,3 +20,8 @@
 Kubernetes Client Release Notes
 ===============================
 
+Version 0.0.7, 21 September 2018
+================================
+* Initial version of the kubernetes-client component, per the design for
+  `Acumos Solution Deployment in Private Kubernetes Cluster <https://docs.acumos.org/en/latest/submodules/kubernetes-client/docs/deploy-in-private-k8s.html>`_
+* Deploy model to Kubernetes Environment (`ACUMOS-1289 <https://jira.acumos.org/browse/ACUMOS-1289>`_)

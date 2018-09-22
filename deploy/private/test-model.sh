@@ -56,6 +56,11 @@ function setup_prereqs() {
     sudo apt install -y golang-go
   fi
 
+  if [[ "$(dpkg -l | grep unzip)" == "" ]]; then
+    log "Install unzip"
+    sudo apt install -y unzip
+  fi
+
   if [[ "$(ls ~/protoc/bin/protoc)" == "" ]]; then
     log "Download and install protobuf 3 (protoc) in ~/protoc"
     # Per https://github.com/protocolbuffers/protobuf/releases
@@ -64,30 +69,46 @@ function setup_prereqs() {
   fi
 }
 
+function find_node() {
+  nodes=$(jq '.nodes | length' blueprint.json)
+  n=0; inputnode=''
+  while [[ $n -lt $nodes ]] ; do
+    name=$(jq -r ".nodes[$n].container_name" blueprint.json)
+    if [[ $name == $1 ]]; then
+      node=$n
+    fi
+    n=$[$n+1]
+  done
+}
+
 function test_model() {
   firstms=$(jq -r '.input_ports[0].container_name' blueprint.json)
-  firstop=$(jq -r '.nodes[0].operation_signature_list[0].operation_signature.operation_name' blueprint.json)
-  firstmsg=$(jq -r '.nodes[0].operation_signature_list[0].operation_signature.input_message_name' blueprint.json)
-  firstpkg=$(grep package microservice/$firstms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
-  nodes=$(jq '.nodes | length' blueprint.json)
-  i=0
-  while [[ $i -lt $nodes ]]; do
-    next=$(jq -r ".nodes[$i].operation_signature_list[0].connected_to" blueprint.json)
-    if [[ "$next" == "[]" ]]; then
-      lastms=$(jq -r ".nodes[$i].container_name" blueprint.json)
-      lastmsg=$(jq -r ".nodes[$i].operation_signature_list[0].operation_signature.output_message_name" blueprint.json)
-      lastpkg=$(grep package microservice/$lastms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
-    fi
-    ((i++))
-  done
+  find_node $firstms
+  if [[ $(jq -r ".nodes[$node].node_type" blueprint.json) == DataBroker ]]; then
+    firstms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
+    find_node $firstms
+  fi
 
+  firstop=$(jq -r ".nodes[$node].operation_signature_list[0].operation_signature.operation_name" blueprint.json)
+  firstmsg=$(jq -r ".nodes[$node].operation_signature_list[0].operation_signature.input_message_name" blueprint.json)
+  firstpkg=$(grep package microservice/$firstms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
+  nextms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
+  while [[ $nextms != null ]] ; do
+    find_node $nextms
+    lastms=$(jq -r ".nodes[$node].container_name" blueprint.json)
+    lastmsg=$(jq -r ".nodes[$node].operation_signature_list[0].operation_signature.output_message_name" blueprint.json)
+    lastpkg=$(grep package microservice/$lastms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
+    nextms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
+  done
+  set -x
   echo "$input" \
-	| ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
-      --proto_path=microservice/$firstms microservice/$firstms/model.proto \
-	| curl -s --request POST --header "Content-Type: application/protobuf" \
-      --data-binary @- http://$host:30555/$firstop \
-	| ~/protoc/bin/protoc --decode $lastpkg.$lastmsg \
-      --proto_path=microservice/$lastms microservice/$lastms/model.proto
+		| ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
+		    --proto_path=microservice/$firstms microservice/$firstms/model.proto \
+		| curl -s --request POST --header "Content-Type: application/protobuf" \
+		    --data-binary @- http://$host:30555/$firstop \
+		| ~/protoc/bin/protoc --decode $lastpkg.$lastmsg \
+		    --proto_path=microservice/$lastms microservice/$lastms/model.proto
+  set +x
 }
 
 input="$1"

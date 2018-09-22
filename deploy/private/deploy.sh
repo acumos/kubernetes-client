@@ -23,12 +23,15 @@
 #. Prerequisites:
 #. - Ubuntu Xenial or Centos 7 server
 #. - Via the Acumos platform, download a solution.zip deployment package for
-#.   a specific solution/revision, and unzip the package into a folder.
+#.   a specific solution/revision, and unzip the package into a folder
 #. Usage:
-#. - bash deploy.sh <user> <pass> [datasource]
+#. - bash deploy.sh <solution> <user> <pass> [datasource]
+#.   solution: path to folder where solution.zip was unpacked
 #.   user: username on the Acumos platform
-#.   pass: password on the Acummos platform
+#.   pass: password on the Acumos platform
 #.   datasource: (optional) file path or URL of data source for databroker
+
+set -x
 
 trap 'fail' ERR
 
@@ -81,11 +84,16 @@ EOF
 function update_datasource() {
   trap 'fail' ERR
   if [[ $(grep -c 'app: databroker' solution.yaml) -gt 0 ]]; then
-    log "copy the subfolders under 'microservice' from the unpacked solution.zip to /var/acumos"
-
-    sudo mkdir -p /var/acumos/log
-    sudo chown -R $USER:$USER /var/acumos
-    cp -r microservice /var/acumos/.
+    log "Extract databroker.json from blueprint.json"
+    nodes=$(jq '.nodes | length' blueprint.json)
+    node=0
+    while [[ $node -lt $nodes ]] ; do
+      type=$(jq --raw-output ".nodes[$node].node_type" blueprint.json)
+      if [[ $type == DataBroker ]]; then
+        jq -r ".nodes[$node].data_broker_map" blueprint.json >> databroker.json
+      fi
+      node=$[$node+1]
+    done
 
     log "update databroker.json per the datasource selected by the user"
     if [[ $(echo $datasource | grep -c ':') -gt 0 ]]; then
@@ -93,6 +101,39 @@ function update_datasource() {
     else
       sed -i -- 's~"local_system_data_file_path": ".*"~"local_system_data_file_path": "/var/acumos/datasource"~' databroker.json
     fi
+  fi
+}
+
+function update_blueprint() {
+  trap 'fail' ERR
+  if [[ -d microservice ]]; then
+    log "copy the subfolders under 'microservice' from the unpacked solution.zip to /var/acumos"
+
+    sudo mkdir -p /var/acumos/log
+    sudo chown -R $USER:$USER /var/acumos
+    # Note: copying microservice protofiles to /var/acumos, and sharing that
+    # folder with probe, is redundant with the nginx-based probe design also
+    # supported below, but is retained here for eventual migration to this
+    # lower-overhead design
+    cp -r microservice /var/acumos/.
+
+    log "update URL to model.proto files in blueprint.json"
+    # Note: modelconnector sends these URLs to probe which retrieves the proto
+    # files from the solution-embedded nginx server
+    nodes=$(jq '.nodes | length' blueprint.json)
+    models=$(ls microservice)
+    for model in $models ; do
+      node=0
+      while [[ $node < $nodes ]] ; do
+        name=$(jq --raw-output ".nodes[$node].container_name" blueprint.json)
+        if [[ $name == $model ]]; then
+          echo ".nodes[$node].proto_uri = \"http://localhost/$model/model.proto\""
+          jq ".nodes[$node].proto_uri = \"http://localhost/$model/model.proto\"" blueprint.json > blueprint1.json
+          mv blueprint1.json blueprint.json
+        fi
+        node=$[$node+1]
+      done
+    done
   fi
 }
 
@@ -132,13 +173,16 @@ function deploy_solution() {
 
   if [[ $(grep -c 'app: databroker' solution.yaml) -gt 0 ]]; then
     log "monitor the status of the databroker service and deployment, and when they are running, send databroker.json to the databroker via its /configDB API"
-    databroker=$(kubectl get pods --namespace kube-system | awk '/databroker/ {print $3}')
+    databroker=$(kubectl get pods --namespace acumos | awk '/databroker/ {print $3}')
     while [[ "$databroker" != "Running" ]]; do
       log "databroker status is $databroker. Waiting 60 seconds"
       sleep 60
-      databroker=$(kubectl get pods --namespace kube-system | awk '/databroker/ {print $3}')
+      databroker=$(kubectl get pods --namespace acumos | awk '/databroker/ {print $3}')
     done
     log "databroker status is $databroker"
+    log "send databroker.json to the Data Broker service via the /configDB API"
+    curl -v -X PUT -H "Content-Type: application/json" \
+      http://127.0.0.1:30556/configDB -d @databroker.json
   fi
 
   log "monitor the status of all other services and deployments, and when they are running"
@@ -155,21 +199,25 @@ function deploy_solution() {
   done
 
   if [[ $(grep -c 'app: modelconnector' solution.yaml) -gt 0 ]]; then
-    log "send dockerinfo.json to the modelconnector service via the /putDockerInfo API"
+    log "send dockerinfo.json to the Model Connector service via the /putDockerInfo API"
     curl -v -X PUT -H "Content-Type: application/json" \
       http://127.0.0.1:30555/putDockerInfo -d @dockerinfo.json
-    log "send blueprint.json to the modelconnector service via the /putBlueprint API"
+    log "send blueprint.json to the Model Connector service via the /putBlueprint API"
     curl -v -X PUT -H "Content-Type: application/json" \
       http://127.0.0.1:30555/putBlueprint -d @blueprint.json
   fi
 }
 
-username=$1
-password=$2
-datasource=$3
+solution=$1
+username=$2
+password=$3
+datasource=$4
 
+export WORK_DIR=$(pwd)
+cd $solution
 prepare_docker
 update_datasource
+update_blueprint
 prepare_k8s
 deploy_solution
-
+cd $WORK_DIR

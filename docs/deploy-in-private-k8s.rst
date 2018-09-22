@@ -95,11 +95,14 @@ Architecture
 ------------
 
 The following diagram illustrates the functional components, interfaces, and
-interaction of the components for a typical private-k8s-deployment process:
+interaction of the components for a typical private-k8s-deployment process that
+includes a composite solution, Data Broker, and Probe:
 
 .. image:: images/private-k8s-client-arch.png
 
-A summary of the process steps:
+A summary of the process steps, with conditional statements illustrating where
+the process varies depending upon the type of solution (simple or composite),
+and inclusion of specific optional features (Data Broker, Probe):
 
 #. At the Acumos platform, the user selects "deploy to private k8s cloud", and
    follows this optional procedure to setup a private k8s cluster
@@ -122,17 +125,17 @@ A summary of the process steps:
 #. The user prepares the solution package for deployment
 
    * E: the user uploads the downloaded solution package to the k8s master host
-   * F: the user unpacks the package, which includes 
+   * F: the user unpacks the package, which includes
 
       * deploy.sh: deployment script
       * solution.yaml: k8s template for deploying the set of model microservices
         included in the solution, plus the Data Broker, Model Connector, and
         Probe services
-      * databroker.json: Data Broker model data source to target mapping info
       * blueprint.json: solution blueprint as created by the Design Studio
+      * dockerinfo.json: file with microservice name to IP/Port mapping info
       * a "microservice" subfolder, containing a subfolder named for each
-        model microservice container in the solution, within which is the
-        "model.proto" artifact for the microservice
+        model microservice container (by its container name) in the solution,
+        within which is the "model.proto" artifact for the microservice
 
 #. The user kicks off the deployment, which runs automatically from this point
 
@@ -149,38 +152,46 @@ A summary of the process steps:
      and confirms login success to the docker client.
    * D: deploy.sh logs into the Acumos project docker registry, using the
      Acumos project credentials
-   * E: deploy.sh copies the model.proto files for the solution to a host-shared
-     folder where the probe service can access them, and initiates deployment of
-     the solution via kubectl, using the solution.yaml template. kubectl deploys
-     all the services defined in the template.
-   * F: using the cached authentication for the Acumos docker registry and
+   * E: if the solution includes the modelconnector (i.e. is a composite
+     solution), deploy.sh copies the microservice folder to /var/acumos and
+     updates the blueprint.json with the location of the model.proto files as
+     they will be deployed by the embedded nginx server.
+   * F: deploy.sh initiates deployment of the solution via kubectl, using the
+     solution.yaml template. kubectl deploys all the services defined in the
+     template.
+   * G: using the cached authentication for the Acumos docker registry (via
+     the docker-proxy, which validates the active login of the user, and pulls
+     the requested image(s) from the Acumos platform docker registry) and
      the Acumos project docker registry, k8s pulls the docker images for all
-     solution microservices and Acumos project components, and deplpys them.
-   * G: the docker-proxy validates the active login of the user, and pulls the
-     requested image from the Acumos platform docker registry.
-   * H: When the Data Broker service is active (determined by monitoring its
-     status through kubectl), deploy.sh
+     solution microservices and Acumos project components, and deploys them.
+   * H: if the solution includes the Data Broker, when the Data Broker service
+     is active (determined by monitoring its status through kubectl), deploy.sh
 
-     * updates databroker.json with the data source (file or URL) selected by
-       the user
+     * extracts the "data_broker_map" section of blueprint.json as databroker.json
      * invokes the Data Broker /configDB API to configure Data Broker with model
        data source to target mapping info using databroker.json
 
-   * I: The Data Broker begins retrieving the solution input data, and waits for
-     a /pullData API request from the Model Connector
+   * I: if the solution includes the Data Broker, the Data Broker begins
+     retrieving the solution input data, and waits for a /pullData API request
+     from the Model Connector
    * J: When all of the microservices are active (determined by monitoring their
-     status through kubectl), deploy.sh
+     status through kubectl), if the solution includes the Model Connector,
+     deploy.sh
 
-     * creates a dockerinfo file with microservice name to IP/Port mapping info
+     * invokes the Model Connector /putDockerInfo API with dockerinfo.json
      * invokes the Model Connector /putBlueprint API with blueprint.json
-     * invokes the Model Connector /putDockerInfo API with the generated
-       dockerinfo file
 
-   * K: Once /putDockerInfo is processed by the Model Connector, it calls the
-     Data Broker /pullData API to start retrieval of test/training data, and
-     solution operation proceeds from there, with data being routed by the
-     Model Connector through the microservice forwarding graph defined for the
-     solution
+   * K: if the solution includes the Data Broker, the Model Connector calls the
+     Data Broker /pullData API to start retrieval of test/training data
+
+Solution operation proceeds, with data being routed into the model microservice(s)
+by the following, as applicable to the solution:
+
+* by the Data Broker, upon request of the Model Connector
+* if Data Broker is not included, by the Model Connector upon reception of
+  a protobuf message matching the first blueprint node's input operation
+* if neither the Data Broker or Model Connector are included, upon reception
+  a protobuf message matching the model's input operation
 
 .....................
 Functional Components
@@ -654,56 +665,45 @@ Notes on the template attributes:
         - name: datasource
           hostPath:
             path: /var/acumos/datasource
-  ---
-  apiVersion: v1
-  kind: Service
-  metadata:
-    namespace: acumos
-    name: probe-ui
-  spec:
-    selector:
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: acumos
+  name: probe
+  labels:
+    app: probe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
       app: probe
-    type: NodePort
-    ports:
-    - nodePort: 30800
-      port: 8000
-      targetPort: 8000
-  ---
-  apiVersion: apps/v1
-  kind: Deployment
-  metadata:
-    namespace: acumos
-    name: probe
-    labels:
-      app: probe
-  spec:
-    replicas: 1
-    selector:
-      matchLabels:
+  template:
+    metadata:
+      labels:
         app: probe
-    template:
-      metadata:
-        labels:
-          app: probe
-      spec:
-        imagePullSecrets:
-        - name: acumos-registry
-        containers:
-        - name: probe
-          image: nexus3.acumos.org:10004/acumos-proto-viewer
-          ports:
-          - name: probe-ui
-            containerPort: 8000
-          - name: probe-api
-            containerPort: 5006
-          volumeMounts:
-          - mountPath: /var/acumos/
-            name: proto-files
-        restartPolicy: Always
-        volumes:
-        - name: proto-files
-          hostPath:
-            path: /var/acumos/
+    spec:
+      imagePullSecrets:
+      - name: acumos-registry
+      containers:
+      - name: probe
+        image: nexus3.acumos.org:10004/acumos-proto-viewer:1.5.5
+        ports:
+        - name: probe-api
+          containerPort: 5006
+      - name: nginx
+        image: nginx
+        ports:
+        - name: nginx
+          containerPort: 80
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: proto-files
+      restartPolicy: Always
+      volumes:
+      - name: proto-files
+        hostPath:
+          path: /var/acumos/microservices
   ---
   apiVersion: v1
   kind: Service
