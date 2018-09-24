@@ -112,6 +112,7 @@ public class KubeController {
     	 dBean.setProbeModelPort(probeModelPort);
     	 dBean.setProbeNodePort(probeNodePort);
     	 dBean.setProbeApiPort(probeApiPort);
+    	 dBean.setProbeTargetPort(probeTargetPort);
     	 log.debug("probeModelPort "+probeModelPort);
     	 log.debug("probeNodePort "+probeNodePort);
     	 log.debug("probeTargetPort "+probeTargetPort);

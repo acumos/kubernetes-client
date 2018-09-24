@@ -25,8 +25,10 @@ Kubernetes-Client Component
 ...........................
 
 --------------------------------
-Version 0.0.8, 22 September 2018
+Version 0.0.9, 24 September 2018
 --------------------------------
+Create k8s (Kubernetes) template from Blueprint(ACUMOS-1382)
+
 
 Released version as of code freeze (M4).
 
