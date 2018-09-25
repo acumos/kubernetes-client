@@ -15,6 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
   ===============LICENSE_END=========================================================
+..
 
 ========================================================
 Acumos Solution Deployment in Private Kubernetes Cluster
@@ -78,9 +79,11 @@ The private-k8s-deployment features planned for delivery in the current release
   that includes the prerequisites of the solution deployment process
 * a templated deployment shell script (deploy.sh) that executes the deployment
   when invoked by the user on the k8s master
-* a new Acumos platform component, the "k8s-client", that collects solution
+* a new Acumos platform component, the "kubernetes-client", that collects solution
   artifacts, creates a k8s template for the solution, and prepares a
   downloadable solution package as "solution.zip"
+* a new Acumos platform component, the "docker-proxy", which is installed as
+  part of automated all-in-one (AIO) or manual installations, as described below
 
 private-k8s-deployment depends upon these related features to be delivered in
 the Athena release:
@@ -104,16 +107,10 @@ A summary of the process steps, with conditional statements illustrating where
 the process varies depending upon the type of solution (simple or composite),
 and inclusion of specific optional features (Data Broker, Probe):
 
-#. At the Acumos platform, the user selects "deploy to private k8s cloud", and
-   follows this optional procedure to setup a private k8s cluster
+#. At the Acumos platform, the user selects "deploy to local" (in the current
+   release this is limited to a "private k8s cloud").
 
-   * A: the user selects a link to "download a k8s cluster setup script"
-   * B: the user saves the script on a host where the k8s cluster will be installed
-   * C: the user executes the setup script and a k8s cluster is installed
-
-#. The user requests to download the deployable solution
-
-   * A: the user selects a link to "download the solution and deployment script"
+   * A: the user selects the "Download Solution Package" button
    * B: the portal-marketplace calls the /getSolutionZip API of the k8s-client
      service
    * C: the k8s-client calls the Solution Controller APIs of the
@@ -124,9 +121,10 @@ and inclusion of specific optional features (Data Broker, Probe):
 
 #. The user prepares the solution package for deployment
 
-   * E: the user uploads the downloaded solution package to the k8s master host
-   * F: the user unpacks the package, which includes
+   * A: the user uploads the downloaded solution package to the k8s master host
+   * B: the user unpacks the package, which includes
 
+      * setup_k8s.sh: optional k8s cluster setup script
       * deploy.sh: deployment script
       * solution.yaml: k8s template for deploying the set of model microservices
         included in the solution, plus the Data Broker, Model Connector, and
@@ -137,13 +135,30 @@ and inclusion of specific optional features (Data Broker, Probe):
         model microservice container (by its container name) in the solution,
         within which is the "model.proto" artifact for the microservice
 
+#. If needed, the user installs a k8s cluster by running the command
+
+.. code-block:: bash
+
+  bash setup_k8s.sh
+..
+
 #. The user kicks off the deployment, which runs automatically from this point
 
    * A: the user invokes deploy.sh, including parameters
 
-     * the data source (file or URL) that the Data Broker should use
+     * the path to folder where solution.zip was unpacked; in the
+       example below the user is in the folder where solution.zip was unpacked,
+       thus the solution.yaml is in location "."
      * the user's credentials on the Acumos platform, as needed to authorize the
-       user's docker client to pull solution microservice images during deployment
+       user's docker client to pull solution microservice images during
+       deployment
+     * if the Acumos Generic Data Broker was included in the solution, the data
+       source (file or URL) that the Data Broker should use
+
+.. code-block:: bash
+
+  bash deploy.sh . suedadev ka93h18 data.csv
+..
 
    * B: deploy.sh logs into the Acumos docker registry via the docker-proxy,
      using the provided user credentials
@@ -665,45 +680,62 @@ Notes on the template attributes:
         - name: datasource
           hostPath:
             path: /var/acumos/datasource
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  namespace: acumos
-  name: probe
-  labels:
-    app: probe
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    namespace: acumos
+    name: probe
+  spec:
+    selector:
       app: probe
-  template:
-    metadata:
-      labels:
+    type: NodePort
+    ports:
+    - nodePort: 30800
+      port: 5006
+      targetPort: 5006
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    namespace: acumos
+    name: probe
+    labels:
+      app: probe
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
         app: probe
-    spec:
-      imagePullSecrets:
-      - name: acumos-registry
-      containers:
-      - name: probe
-        image: nexus3.acumos.org:10004/acumos-proto-viewer:1.5.5
-        ports:
-        - name: probe-api
-          containerPort: 5006
-      - name: nginx
-        image: nginx
-        ports:
+    template:
+      metadata:
+        labels:
+          app: probe
+      spec:
+        imagePullSecrets:
+        - name: acumos-registry
+        containers:
+        - name: probe
+          image: nexus3.acumos.org:10004/acumos-proto-viewer:1.5.5
+          env:
+          - name: NEXUSENDPOINTURL
+            value: http://localhost:80
+          ports:
+          - name: probe-api
+            containerPort: 5006
         - name: nginx
-          containerPort: 80
-        volumeMounts:
-        - mountPath: /usr/share/nginx/html
-          name: proto-files
-      restartPolicy: Always
-      volumes:
-      - name: proto-files
-        hostPath:
-          path: /var/acumos/microservices
+          image: nginx
+          ports:
+          - name: probe-schema
+            containerPort: 80
+          volumeMounts:
+          - mountPath: /usr/share/nginx/html
+            name: proto-files
+        restartPolicy: Always
+        volumes:
+        - name: proto-files
+          hostPath:
+            path: /var/acumos/microservice
   ---
   apiVersion: v1
   kind: Service
@@ -880,16 +912,28 @@ docker-proxy
 
 The docker-proxy service of the Acumos platform will provide a simple
 user-authenticating frontend (reverse proxy) for the docker registry configured
-as part of the Acumos platform. The docker-proxy service may be based upon nginx
-as described at https://docs.docker.com/v17.09/registry/recipes/nginx/.
+as part of the Acumos platform. The docker-proxy service as of the Athena
+release is based upon nginx as described at
+https://docs.docker.com/v17.09/registry/recipes/nginx/. The nginx server is
+installed under docker-CE using docker-compose, as described under
+`Operations User Guide`_. The docker-proxy service terminates secure connections
+(HTTPS) as a proxy for docker operations, connecting to the platform docker
+registry on the backend through an HTTP connection.
 
 The docker-proxy will provide only a docker login service and image download
 service for docker pull requests, as below:
 
-* upon a docker login request, invoke the auth/jwtToken API of the Acumos
-  portal, with the username and password provided in the docker login request
-* if the auth/jwtToken API returns success, accept the user login and return
-  an authentication token for the user, otherwise return an authentication error
+* validate the username and password provided in docker login requests
+
+  * NOTE: as of Athena release, the following user-specific design aspects are
+    deferred to the Boreas release, and a single username/password is supported
+    by the docker-proxy service. See `Operations User Guide`_ for details.
+
+    * upon a docker login request, invoke the auth/jwtToken API of the Acumos
+      portal, with the username and password provided in the docker login request
+    * if the auth/jwtToken API returns success, accept the user login and return
+      an authentication token for the user, otherwise return an authentication error
+
 * upon a docker pull request, if there is a valid authentication token, attempt
   to retrieve the requested image from the Acumos platform docker registry, and
   return the result to the requester
@@ -931,7 +975,17 @@ host, using the example command:
 where:
 
 * <acumos username> is the user's account username on the Acumos platform
+
+  * NOTE: for the Athena release, this must be a single value set for the
+    platform in the installation of the docker-proxy, as described under
+    `Operations User Guide`_
+
 * <acumos password> is the user's account password on the Acumos platform
+
+  * NOTE: for the Athena release, this must be a single value set for the
+    platform in the installation of the docker-proxy, as described under
+    `Operations User Guide`_
+
 * <datasource> is where the databroker will be instructed to obtain data to
   feed into the solution, and can be a file path or a URL
 
@@ -953,7 +1007,7 @@ deploy.sh will then take the following actions to deploy the solution:
     attribute of the databroker deployment in solution.yaml with the
     user-provided file path, replace the "local_system_data_file_path" attribute
     in databroker.json with the path "/var/acumos/datasource", and set the
-    "target_system_url" attribute to "" 
+    "target_system_url" attribute to ""
   * if the user provided a URL as datasource, set the "target_system_url"
     attribute in databroker.json to the URL, and set the
     "local_system_data_file_path" attribute to ""
@@ -971,3 +1025,165 @@ deploy.sh will then take the following actions to deploy the solution:
   * send dockerinfo.json to the modelconnector service via the /putDockerInfo
     API
   * send blueprint.json to the modelconnector service via the /putBlueprint API
+
+---------------------
+Operations User Guide
+---------------------
+
+Platform support for private-k8s-deployment is automatically installed as part
+of the `Acumos AIO (all-in-one) <https://docs.acumos.org/en/latest/AcumosUser/oneclick-deploy/user-guide.html>`_
+deployment process. For manual installations, the docker-proxy component needs
+to be manually installed using the "deploy.sh" script from the Acumos
+system-integration repo. The subsections below address how to deploy the
+docker-proxy for Acumos platforms installed using other methods (e.g. manually),
+and how to maintain the docker-proxy service in the platform.
+
+NOTE: for the Athena release, only a single docker-proxy user account is
+supported, as a value that the Acumos platform admin can set/change as needed.
+The Boreas release will support authentication of users using their Acumos
+platform credentials. As a result of this design limitation,the current
+platform support for the docker-proxy is intended for use in private Acumos
+installations.
+
+................................
+Manual docker-proxy Installation
+................................
+
+The docker-proxy service can be manually installed by following these steps:
+
+* clone the Acumos system-integration repo onto one of the host machines in your
+  Acumos platform cluster, and enter the folder
+
+.. code-block:: shell
+
+  git clone https://gerrit.acumos.org/r/system-integration
+  cd system-integration
+..
+
+* edit acumos-env.sh in that folder
+
+  * set ACUMOS_NEXUS_HOST to the hostname or IP address of your Nexus server or
+    other docker registry used by your Acumos platform
+  * set ACUMOS_DOCKER_MODEL_PORT the port where the docker registry for your
+    platform is accessible
+
+    * NOTE: the platform docker registry must be exposed at the specified host
+      and port as a non-secure (http-based) service, and accessible to the host
+      where you are installing the docker-proxy
+
+  * set ACUMOS_RO_USER to the username of the Nexus server "RO" (read-only)
+    account setup for your platform
+  * if needed, choose a different value for ACUMOS_DOCKER_PROXY_PORT
+
+  * add these lines to the end of the script, choosing values as desired
+
+    * ACUMOS_RO_USER_PASSWORD="Nexus RO user password for your installation"
+    * export ACUMOS_RO_USER_PASSWORD
+    * ACUMOS_DOCKER_PROXY_USERNAME="username"
+    * export ACUMOS_DOCKER_PROXY_USERNAME
+    * ACUMOS_DOCKER_PROXY_PASSWORD="password"
+    * export ACUMOS_DOCKER_PROXY_PASSWORD
+
+* Copy your Acumos platform server certificate and key to the following
+  locations
+
+  * Certificate:     /var/acumos/docker-proxy/auth/domain.crt
+  * Certificate key: /var/acumos/docker-proxy/auth/domain.key
+
+* run deploy.sh
+
+.. code-block:: shell
+
+  bash docker-proxy/deploy.sh
+..
+
+Once deploy.sh completes, the docker-proxy should be ready to proxy docker
+login requests to the platform Nexus server. To test this, run the command:
+
+.. code-block:: shell
+
+  sudo docker login <ACUMOS_DOMAIN>:<ACUMOS_DOCKER_PROXY_PORT> -u <ACUMOS_DOCKER_PROXY_USERNAME> -p <ACUMOS_DOCKER_PROXY_PASSWORD>
+..
+
+where:
+
+* ACUMOS_DOMAIN is the domain name or IP address of your Acumos platform, and is
+  setup for use with your server certificate
+* ACUMOS_DOCKER_PROXY_PORT, ACUMOS_DOCKER_PROXY_USERNAME, and
+  ACUMOS_DOCKER_PROXY_PASSWORD are as defined in acumos-env.sh (updated as
+  needed, per the instructions above)
+
+.....................................
+Updating the docker-proxy credentials
+.....................................
+
+To update the docker-proxy credentials, edit acumos-env.sh and select new
+values for:
+
+* ACUMOS_DOCKER_PROXY_USERNAME
+* ACUMOS_DOCKER_PROXY_PASSWORD
+
+The redeploy the docker-proxy service, delete and restart it via:
+
+.. code-block:: shell
+
+  sudo bash docker-proxy/docker-compose.sh -f docker-compose.yml down -v
+  bash docker-proxy/deploy.sh
+..
+
+..............................
+Testing private-k8s-deployment
+..............................
+
+To test operation of the private-k8s-deployment, follow these steps:
+
+* create or select a composite solution to deploy
+* when viewing the solution, select the "deploy to local" option as described above
+* save the downloaded solution.zip to your host where you will deploy it
+* unzip the solution.zip file
+* if you don't have a private k8scluster (for which you have admin rights on the
+  k8s master node), install a private cluster
+
+.. code-block:: shell
+
+  bash setup_k8s.sh
+..
+
+* when the k8s cluster has been installed, deploy the solution
+
+.. code-block:: shell
+
+ bash deploy.sh . <ACUMOS_DOCKER_PROXY_USERNAME> <ACUMOS_DOCKER_PROXY_PASSWORD>
+..
+
+To test that the solution works as expected, use the applicable test harness
+as specified for the solution. For example, to verify a simple CSV-based model
+which adds two values, and squares the result, you can use the
+"`test-model.sh <https://github.com/acumos/kubernetes-client/blob/master/deploy/private/test-model.sh>`_"
+script from the Acumos kubernetes-client repo. An example is shown below. In
+the output of that script, the "+" lines show how the script communicates with
+the model using the protobuf interface, and the "d: 36" shows the output is
+calculated correctly. This verifies that the model was deployed correctly, and
+the Model Connector is able to route the protobuf messages through the sequence
+of model microservices.
+
+.. code-block:: shell
+
+  bash test-model.sh "f1:2.0,f2:4.0" acumos
+  + echo f1:2.0,f2:4.0
+  + /home/ubuntu/protoc/bin/protoc --encode=qpkoABdpWtEectZiyCoOSVwwmOyrVLcv.ParmInput --proto_path=microservice/padd1 microservice/padd1/model.proto
+  + curl -s --request POST --header 'Content-Type: application/protobuf' --data-binary @- http://acumos:30555/padd
+  + /home/ubuntu/protoc/bin/protoc --decode rJdqDZiRsZmWwHvgVFBWtGwvPgvuIHEM.SquareMessage --proto_path=microservice/square1 microservice/square1/model.proto
+  d: 36
+  + set +x
+..
+
+
+To terminate a solution deployment, run:
+
+.. code-block:: shell
+
+  kubectl delete -f solution.yaml
+..
+
+You can then redeploy the solution as described above.
