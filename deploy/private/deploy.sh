@@ -31,8 +31,6 @@
 #.   pass: password on the Acumos platform
 #.   datasource: (optional) file path or URL of data source for databroker
 
-set -x
-
 trap 'fail' ERR
 
 function fail() {
@@ -199,6 +197,9 @@ function deploy_solution() {
   done
 
   if [[ $(grep -c 'app: modelconnector' solution.yaml) -gt 0 ]]; then
+    log "Patch dockerinfo.json as workaround for https://jira.acumos.org/browse/ACUMOS-1791"
+    sed -i -- 's/"container_name":"probe"/"container_name":"Probe"/' dockerinfo.json
+
     log "send dockerinfo.json to the Model Connector service via the /putDockerInfo API"
     curl -v -X PUT -H "Content-Type: application/json" \
       http://127.0.0.1:30555/putDockerInfo -d @dockerinfo.json
