@@ -361,6 +361,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		
 		Iterator itr=deploymentKubeBeanList.iterator();
 		while(itr.hasNext()){
+			String portDockerInfo="";
 			DeploymentKubeBean depBen=(DeploymentKubeBean)itr.next();
 			if(depBen!=null && depBen.getContainerName()!=null && !"".equals(depBen.getContainerName())
 					        && depBen.getImage()!=null && !"".equals(depBen.getImage())
@@ -385,6 +386,18 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 				String serviceYml=getCompositeSolutionService(depBen.getContainerName(),imagePort,depBen.getNodeType(),dBean);
 				String deploymentYml=getCompositeSolutionDeployment(depBen.getImage(),depBen.getContainerName(),
 						imagePort,depBen.getNodeType(),dBean);
+				
+				if(depBen.getNodeType()!=null && depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+					portDockerInfo=dBean.getBluePrintPort();
+				}else if(depBen.getNodeType()!=null && depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
+					portDockerInfo=dBean.getDataBrokerTargetPort();
+				}else if(depBen.getNodeType()!=null && depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
+					portDockerInfo=dBean.getProbeTargetPort();
+				}else{
+					portDockerInfo=imagePort;
+				}
+				logger.debug("depBen.getNodeType() "+depBen.getNodeType());
+				logger.debug("portDockerInfo "+portDockerInfo);
 				logger.debug("serviceYml "+serviceYml);
 				logger.debug("deploymentYml "+deploymentYml);
 				solutionYml=solutionYml+serviceYml;
@@ -394,7 +407,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 				DockerInfoBean dockerInfoBean=new DockerInfoBean();
 				dockerInfoBean.setContainer(depBen.getContainerName());
 				dockerInfoBean.setIpAddress(depBen.getContainerName());
-				dockerInfoBean.setPort(String.valueOf(imagePort));
+				dockerInfoBean.setPort(portDockerInfo);
 				dockerInfoBeanList.add(dockerInfoBean);
 			}
 			
