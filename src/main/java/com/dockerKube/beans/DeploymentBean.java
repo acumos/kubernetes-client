@@ -57,9 +57,25 @@ public class DeploymentBean {
 	private String probeNodePort;
 	private String probeTargetPort;
 	private String probeApiPort;
+	private String dockerProxyHost;
+	private String dockerProxyPort;
 	private List<ContainerBean> containerBeanList;
 	
 	
+	
+	
+	public String getDockerProxyHost() {
+		return dockerProxyHost;
+	}
+	public void setDockerProxyHost(String dockerProxyHost) {
+		this.dockerProxyHost = dockerProxyHost;
+	}
+	public String getDockerProxyPort() {
+		return dockerProxyPort;
+	}
+	public void setDockerProxyPort(String dockerProxyPort) {
+		this.dockerProxyPort = dockerProxyPort;
+	}
 	public String getProbeModelPort() {
 		return probeModelPort;
 	}

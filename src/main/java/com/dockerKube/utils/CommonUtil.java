@@ -54,6 +54,24 @@ public class CommonUtil {
 		logger.debug(" End containerName "+containerName);
 		return containerName;
 	  }
+	public String getProxyImageName(String imageName,String dockerProxyHost,String dockerProxyPort){
+		logger.debug("Start-geProxyImageName "+imageName);
+		String dockerImage="";
+		String image="";
+		if(imageName!=null){
+			String imageArr[]=imageName.split("/");
+			if(imageArr!=null && imageArr[1]!=null){
+				image=imageArr[1];
+			}
+		}
+		logger.debug("image "+image);
+		if(image!=null && !"".equals(image) && dockerProxyHost!=null && dockerProxyPort!=null){
+			dockerImage=dockerProxyHost+":"+dockerProxyPort+"/"+image;
+		}
+		
+		logger.debug(" end geProxyImageName dockerImage"+dockerImage);
+		return dockerImage;
+	  }
 	/** getFileDetails method is used to get file details
 	 * @param fileDetails
 	 *             - file Details 

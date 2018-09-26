@@ -43,6 +43,7 @@ import com.dockerKube.beans.ContainerBean;
 import com.dockerKube.beans.DeploymentBean;
 import com.dockerKube.beans.DeploymentKubeBean;
 import com.dockerKube.beans.DockerInfo;
+import com.dockerKube.beans.DockerInfoBean;
 import com.dockerKube.beans.MLSolutionBean;
 import com.dockerKube.controller.KubeController;
 import com.dockerKube.parsebean.Blueprint;
@@ -329,7 +330,8 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		ParseJSON parseJson=new ParseJSON();
 		CommonUtil cutil=new CommonUtil();
 		String solutionYml="";
-		List<DockerInfo> dockerInfoList=new ArrayList<DockerInfo>();
+		DockerInfo dockerInfo=new DockerInfo();
+		List<DockerInfoBean> dockerInfoBeanList=new ArrayList<DockerInfoBean>();
 		ByteArrayOutputStream bOutput = new ByteArrayOutputStream(12);
 		dataBrokerBean=parseJson.getDataBrokerContainer(jsonString);
 		//ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(Feature.WRITE_DOC_START_MARKER));
@@ -355,6 +357,8 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		
 		
 		int contPort=Integer.parseInt(dBean.getIncrementPort());
+		DockerInfo dockerBluePrintInfo=new DockerInfo();
+		
 		Iterator itr=deploymentKubeBeanList.iterator();
 		while(itr.hasNext()){
 			DeploymentKubeBean depBen=(DeploymentKubeBean)itr.next();
@@ -387,25 +391,26 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 				solutionYml=solutionYml+deploymentYml;
 				logger.debug("solutionYml "+solutionYml);
 				
-				DockerInfo dockerBluePrintInfo=new DockerInfo();
-				dockerBluePrintInfo.setContainer(depBen.getContainerName());
-				dockerBluePrintInfo.setIpAddress(depBen.getContainerName());
-				dockerBluePrintInfo.setPort(String.valueOf(imagePort));
-		  		dockerInfoList.add(dockerBluePrintInfo);
+				DockerInfoBean dockerInfoBean=new DockerInfoBean();
+				dockerInfoBean.setContainer(depBen.getContainerName());
+				dockerInfoBean.setIpAddress(depBen.getContainerName());
+				dockerInfoBean.setPort(String.valueOf(imagePort));
+				dockerInfoBeanList.add(dockerInfoBean);
 			}
 			
 		}
 		logger.debug("Final solutionYml "+solutionYml);
 		dBean.setSolutionYml(solutionYml);
-		if(dockerInfoList!=null && dockerInfoList.size() > 0){
+		dockerInfo.setDockerInfolist(dockerInfoBeanList);
+		if(dockerInfo!=null){
 			ObjectMapper objMapper = new ObjectMapper();
-			String dockerJson=objMapper.writeValueAsString(dockerInfoList);
+			String dockerJson=objMapper.writeValueAsString(dockerInfo);
 			logger.debug("dockerJson "+dockerJson);
 			dBean.setDockerInfoJson(dockerJson);
 		}
 		if(dataBrokerBean!=null){
 			ObjectMapper dataBrokerMapper = new ObjectMapper();
-			String dataBrokerJson=dataBrokerMapper.writeValueAsString(dockerInfoList);
+			String dataBrokerJson=dataBrokerMapper.writeValueAsString(dataBrokerBean);
 			logger.debug("dataBrokerJson "+dataBrokerJson);
 			dBean.setDataBrokerJson(dataBrokerJson);
 		}
@@ -602,8 +607,8 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
   public String getSingleSolutionDeployment(String imageTag,DeploymentBean dBean)throws Exception{
 	    logger.debug("getSingleSolutionDeployment Start");
 	    ObjectMapper objectMapper = new ObjectMapper();
+	    CommonUtil cutil=new CommonUtil();
 	    YAMLMapper yamlMapper = new YAMLMapper(new YAMLFactory().configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true));
-	    
 	    ObjectNode kindRootNode = objectMapper.createObjectNode();
 	    kindRootNode.put(DockerKubeConstants.APIVERSION_DEP_YML, DockerKubeConstants.APPS_V1_DEP_YML);
 	    kindRootNode.put(DockerKubeConstants.KIND_DEP_YML, DockerKubeConstants.DEPLOYMENT_DEP_YML);
@@ -639,7 +644,8 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		ArrayNode containerArrayNode = templateNode.arrayNode();
 		ObjectNode containerNode  = objectMapper.createObjectNode();
 		containerNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.MYMODEL_DEP_YML);
-		containerNode.put(DockerKubeConstants.IMAGE_DEP_YML, imageTag);
+		containerNode.put(DockerKubeConstants.IMAGE_DEP_YML, 
+				cutil.getProxyImageName(imageTag, dBean.getDockerProxyHost(), dBean.getDockerProxyPort()));
 		
 		ArrayNode portsArrayNode = containerNode.arrayNode();
 		ObjectNode portsNode  = objectMapper.createObjectNode();
@@ -786,7 +792,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 	    logger.debug("getSingleSolutionDeployment Start");
 	    ObjectMapper objectMapper = new ObjectMapper();
 	    YAMLMapper yamlMapper = new YAMLMapper(new YAMLFactory().configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true));
-	    
+	    CommonUtil cutil=new CommonUtil();
 	    ObjectNode kindRootNode = objectMapper.createObjectNode();
 	    kindRootNode.put(DockerKubeConstants.APIVERSION_DEP_YML, DockerKubeConstants.APPS_V1_DEP_YML);
 	    kindRootNode.put(DockerKubeConstants.KIND_DEP_YML, DockerKubeConstants.DEPLOYMENT_DEP_YML);
@@ -858,7 +864,18 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			containerNode.put(DockerKubeConstants.NAME_DEP_YML, containerName);
 		}
 		
-		containerNode.put(DockerKubeConstants.IMAGE_DEP_YML, imageTag);
+		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
+			containerNode.put(DockerKubeConstants.IMAGE_DEP_YML,imageTag);
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
+			containerNode.put(DockerKubeConstants.IMAGE_DEP_YML, 
+					cutil.getProxyImageName(imageTag, dBean.getDockerProxyHost(), dBean.getDockerProxyPort()));
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
+			containerNode.put(DockerKubeConstants.IMAGE_DEP_YML,imageTag);
+		}else{
+			containerNode.put(DockerKubeConstants.IMAGE_DEP_YML, 
+					cutil.getProxyImageName(imageTag, dBean.getDockerProxyHost(), dBean.getDockerProxyPort()));
+		}
+		
 		
 		ArrayNode portsArrayNode = containerNode.arrayNode();
 		ObjectNode portsNode  = objectMapper.createObjectNode();

@@ -211,4 +211,7 @@ public class DockerKubeConstants {
 	public static final String FOLDERPATH="kube.folderPath";
 	public static final String ML_TARGET_PORT="kube.mlTargetPort";
 	
+	public static final String DOCKER_PROXY_HOST="dockerproxy.host";
+	public static final String DOCKER_PROXY_PORT="dockerproxy.port";
+	
 }

@@ -84,6 +84,9 @@ public class KubeController {
 		 String probeTargetPort=(env.getProperty(DockerKubeConstants.PROBE_TARGET_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_TARGET_PORT) : "";
 		 String probeApiPort=(env.getProperty(DockerKubeConstants.PROBE_API_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_API_PORT) : "";
 		 
+		 String dockerProxyHost=(env.getProperty(DockerKubeConstants.DOCKER_PROXY_HOST) != null) ? env.getProperty(DockerKubeConstants.DOCKER_PROXY_HOST) : "";
+		 String dockerProxyPort=(env.getProperty(DockerKubeConstants.DOCKER_PROXY_PORT) != null) ? env.getProperty(DockerKubeConstants.DOCKER_PROXY_PORT) : "";
+		 
 	   	 dBean.setSolutionId(solutionId);
     	 dBean.setSolutionRevisionId(revisionId);
     	 dBean.setNexusUrl(nexusUrl);
@@ -113,6 +116,10 @@ public class KubeController {
     	 dBean.setProbeNodePort(probeNodePort);
     	 dBean.setProbeApiPort(probeApiPort);
     	 dBean.setProbeTargetPort(probeTargetPort);
+    	 dBean.setDockerProxyHost(dockerProxyHost);
+    	 dBean.setDockerProxyPort(dockerProxyPort);
+    	 log.debug("dockerProxyHost "+dockerProxyHost);
+    	 log.debug("dockerProxyPort "+dockerProxyPort);
     	 log.debug("probeModelPort "+probeModelPort);
     	 log.debug("probeNodePort "+probeNodePort);
     	 log.debug("probeTargetPort "+probeTargetPort);
