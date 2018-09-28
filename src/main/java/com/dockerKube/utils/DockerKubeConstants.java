@@ -62,6 +62,8 @@ public class DockerKubeConstants {
 	public static final String PROTOBUF_API_DEP_YML="protobuf-api";
 	public static final String PROBE_UI_YML="probe-ui";
 	
+	
+	
 	public static final String CONTAINERPORT_DEP_YML="containerPort";
 	public static final String PORTS_DEP_YML="ports";
 	public static final String CONTAINERS_DEP_YML="containers";
@@ -71,7 +73,8 @@ public class DockerKubeConstants {
 	public static final String PATHLOGS_DEP_YML="/logs";
 	public static final String DATABROKER_PATHLOG_DEP_YML="/var/acumos/datasource";
 	public static final String DATABROKER_LOGNAME="datasource";
-	public static final String PROBE_PATHLOG_DEP_YML="/var/acumos/";
+	public static final String PROBE_MOUNTPATH_DEP_YML="/usr/share/nginx/html";
+	public static final String PROBE_PATHLOG_DEP_YML="/var/acumos/microservice";
 	public static final String LOGS_DEP_YML="logs";
 	public static final String VOLUMEMOUNTS_DEP_YML="volumeMounts";
 	public static final String ACUMOS_REGISTRY_DEP_YML="acumos-registry";
@@ -92,6 +95,7 @@ public class DockerKubeConstants {
 	public static final String BLUEPRINT_MODELCONNECTOR_NAME= "modelconnector";
 	public static final String SINGLE_CONTAINER_NAME= "SingleImageContainer";
 	public static final String PROBE_CONTAINER_NAME= "probe";
+	public static final String NGINX_CONTAINER_NAME= "nginx";
 	public static final String JSON_FILE_NAME= "blueprint.json";
 	public static final String AZURE_AUTH_LOCATION= "AZURE_AUTH_LOCATION";
 	public static final String AZURE_AUTH_LOCATION_NEXT= "AZURE_AUTH_LOCATION_2";
@@ -106,6 +110,11 @@ public class DockerKubeConstants {
 	public static final String CONFIG_DB_URL= "configDB";
 	public static final String DATABROKER_NAME= "DataBroker";
 	public static final String PROBEAPI_NAME="probe-api";
+	public static final String VALUE="value";
+	public static final String NEXUSENDPOINT_URL="NEXUSENDPOINTURL";
+	public static final String ACUMOS_PROBE_EXTERNAL_PORT="ACUMOS_PROBE_EXTERNAL_PORT";
+	public static final String ENV="env";
+	public static final String PROBE_SCHEMA_YML="probe-schema";
 	
 	public static final String DEPLOYMENT_PROCESS= "DP";
 	public static final String DEPLOYMENT_FAILED= "FA";
@@ -207,10 +216,13 @@ public class DockerKubeConstants {
 	public static final String PROBE_NODE_PORT="probe.probeNodePort";
 	public static final String PROBE_TARGET_PORT="probe.probeTargetPort";
 	public static final String PROBE_API_PORT="probe.probeApiPort";
+	public static final String PROBE_SCHEMA_PORT="probe.probeSchemaPort";
+	public static final String PROBE_EXTERNAL_PORT="probe.probeExternalPort";
 	
 	public static final String FOLDERPATH="kube.folderPath";
 	public static final String ML_TARGET_PORT="kube.mlTargetPort";
-	
+	public static final String NGINX_IMAGE_NAME="kube.nginxImageName";
+	public static final String NEXUS_END_POINTURL="kube.nexusEndPointURL";
 	public static final String DOCKER_PROXY_HOST="dockerproxy.host";
 	public static final String DOCKER_PROXY_PORT="dockerproxy.port";
 	

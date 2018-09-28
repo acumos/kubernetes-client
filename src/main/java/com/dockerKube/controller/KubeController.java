@@ -87,6 +87,12 @@ public class KubeController {
 		 String dockerProxyHost=(env.getProperty(DockerKubeConstants.DOCKER_PROXY_HOST) != null) ? env.getProperty(DockerKubeConstants.DOCKER_PROXY_HOST) : "";
 		 String dockerProxyPort=(env.getProperty(DockerKubeConstants.DOCKER_PROXY_PORT) != null) ? env.getProperty(DockerKubeConstants.DOCKER_PROXY_PORT) : "";
 		 
+		 String probeExternalPort=(env.getProperty(DockerKubeConstants.PROBE_EXTERNAL_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_EXTERNAL_PORT) : "";
+		 String probeSchemaPort=(env.getProperty(DockerKubeConstants.PROBE_SCHEMA_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_SCHEMA_PORT) : "";
+		 String nginxImageName=(env.getProperty(DockerKubeConstants.NGINX_IMAGE_NAME) != null) ? env.getProperty(DockerKubeConstants.NGINX_IMAGE_NAME) : "";
+		 String nexusEndPointURL=(env.getProperty(DockerKubeConstants.NEXUS_END_POINTURL) != null) ? env.getProperty(DockerKubeConstants.NEXUS_END_POINTURL) : "";
+		 
+		 
 	   	 dBean.setSolutionId(solutionId);
     	 dBean.setSolutionRevisionId(revisionId);
     	 dBean.setNexusUrl(nexusUrl);
@@ -118,6 +124,15 @@ public class KubeController {
     	 dBean.setProbeTargetPort(probeTargetPort);
     	 dBean.setDockerProxyHost(dockerProxyHost);
     	 dBean.setDockerProxyPort(dockerProxyPort);
+    	 dBean.setProbeExternalPort(probeExternalPort);
+    	 dBean.setProbeSchemaPort(probeSchemaPort);
+    	 dBean.setNginxImageName(nginxImageName);
+    	 dBean.setNexusEndPointURL(nexusEndPointURL);
+    	 
+    	 log.debug("probeExternalPort "+probeExternalPort);
+    	 log.debug("probeSchemaPort "+probeSchemaPort);
+    	 log.debug("nginxImageName "+nginxImageName);
+    	 log.debug("nexusEndPointURL "+nexusEndPointURL);
     	 log.debug("dockerProxyHost "+dockerProxyHost);
     	 log.debug("dockerProxyPort "+dockerProxyPort);
     	 log.debug("probeModelPort "+probeModelPort);
@@ -160,8 +175,10 @@ public class KubeController {
 	   		solutionZip=kubeService.compositeSolutionDetails(dBean);
 	   		log.debug("Composite Solution Deployment End");
 	   	  }
+	   	response.setStatus(200);
 	   	}catch(Exception e){
 			log.error("getSolutionZip failed", e);
+			response.setStatus(404);
 		}
 	    response.setHeader("Content-Disposition", "attachment; filename=solution.zip");
 	    response.getOutputStream().write(solutionZip);

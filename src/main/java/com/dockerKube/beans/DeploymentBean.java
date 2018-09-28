@@ -59,6 +59,35 @@ public class DeploymentBean {
 	private String probeApiPort;
 	private String dockerProxyHost;
 	private String dockerProxyPort;
+	private String probeExternalPort;
+	private String probeSchemaPort;
+	private String nginxImageName;
+	private String nexusEndPointURL;
+	
+	public String getProbeExternalPort() {
+		return probeExternalPort;
+	}
+	public void setProbeExternalPort(String probeExternalPort) {
+		this.probeExternalPort = probeExternalPort;
+	}
+	public String getProbeSchemaPort() {
+		return probeSchemaPort;
+	}
+	public void setProbeSchemaPort(String probeSchemaPort) {
+		this.probeSchemaPort = probeSchemaPort;
+	}
+	public String getNginxImageName() {
+		return nginxImageName;
+	}
+	public void setNginxImageName(String nginxImageName) {
+		this.nginxImageName = nginxImageName;
+	}
+	public String getNexusEndPointURL() {
+		return nexusEndPointURL;
+	}
+	public void setNexusEndPointURL(String nexusEndPointURL) {
+		this.nexusEndPointURL = nexusEndPointURL;
+	}
 	private List<ContainerBean> containerBeanList;
 	
 	
