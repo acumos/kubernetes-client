@@ -897,7 +897,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			envNode.put(DockerKubeConstants.VALUE, dBean.getNexusEndPointURL());
 			ObjectNode envNodeExternal  = objectMapper.createObjectNode();
 			envNodeExternal.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.ACUMOS_PROBE_EXTERNAL_PORT);
-			envNodeExternal.put(DockerKubeConstants.VALUE, dBean.getProbeExternalPort());
+			envNodeExternal.put(DockerKubeConstants.VALUE, "\""+dBean.getProbeExternalPort()+"\"");
 			envArrayNode.add(envNode);
 			envArrayNode.add(envNodeExternal);
 			containerNode.set(DockerKubeConstants.ENV, envArrayNode);
@@ -1029,8 +1029,9 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		kindRootNode.put(DockerKubeConstants.SPEC_DEP_YML, specNode);
 		
 		String solutionDeployment = yamlMapper.writeValueAsString(kindRootNode);
-		logger.debug(solutionDeployment);
-		
+		logger.debug("before "+solutionDeployment);
+		solutionDeployment=solutionDeployment.replace("'", "");
+		logger.debug("After "+solutionDeployment);
 	    
 	  return solutionDeployment;
 }
