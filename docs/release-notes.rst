@@ -24,11 +24,24 @@ Kubernetes Client Release Notes
 Kubernetes-Client Component
 ...........................
 
+-----------------------------
+Version 0.1.3, 4 October 2018
+-----------------------------
+
+Released version as of Release Candidate 0 (RC0).
+
+* `ACUMOS-1382: Create k8s (Kubernetes) template from Blueprint <https://jira.acumos.org/browse/ACUMOS-1382>`_
+
+  * `Update release notes <https://gerrit.acumos.org/r/3039>`_
+  * `Add double quates in value filed <https://gerrit.acumos.org/r/3012`_
+  * `Add Nginx detail in solution yaml file <https://gerrit.acumos.org/r/2971>`_
+  * `changes in dockerinfo file <https://gerrit.acumos.org/r/2953>`_
+  * `Add dockerproxy and dockerport for kubernetes <https://gerrit.acumos.org/r/2952>`_
+  * `Updated CDS 1.18.1 version <https://gerrit.acumos.org/r/#/c/2930/>`_
+
 --------------------------------
 Version 0.0.9, 24 September 2018
 --------------------------------
-Create k8s (Kubernetes) template from Blueprint(ACUMOS-1382)
-
 
 Released version as of code freeze (M4).
 
@@ -53,6 +66,19 @@ Initial release of the kubernetes-client component, per the design for
 ...........................................
 Private-Kubernetes-Deployment Support Tools
 ...........................................
+
+---------------------------
+Version 0.2, 4 October 2018
+---------------------------
+
+Released version as of Release Candidate 0 (RC0).
+
+* `ACUMOS-1289: Deploy model to Kubernetes Environment <https://jira.acumos.org/browse/ACUMOS-1289>`_
+
+  * `Update release notes <https://gerrit.acumos.org/r/3039>`_
+  * `Align design doc with current implementation <https://gerrit.acumos.org/r/#/c/2940/>`_
+
+    * Patch dockerinfo.json as workaround for `ACUMOS-1791 <https://jira.acumos.org/browse/ACUMOS-1791>`_
 
 ------------------------------
 Version 0.1, 22 September 2018
