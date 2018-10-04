@@ -24,11 +24,36 @@ Kubernetes Client Release Notes
 Kubernetes-Client Component
 ...........................
 
+-----------------------------
+Version 0.1.3, 4 October 2018
+-----------------------------
+
+Released version as of Release Candidate 0 (RC0).
+
+* `ACUMOS-1792: K8S Client Fixes needed in solution.yaml <https://jira.acumos.org/browse/ACUMOS-1792>`_
+
+  * `Add double quates in value filed <https://gerrit.acumos.org/r/#/c/3012/>`_
+  * `Add Nginx detail in solution yaml file <https://gerrit.acumos.org/r/#/c/2971/>`_
+
+* `ACUMOS-1783: K8S client dockerinfo is missing docker_info_list wrapper element <https://jira.acumos.org/browse/ACUMOS-1783>`_
+
+  * `Add dockerproxy and dockerport for kubernetes <https://gerrit.acumos.org/r/#/c/2952/>`_
+
+* `ACUMOS-1782: K8S client Replace nexus docker host:port with docker-proxy host:port <https://jira.acumos.org/browse/ACUMOS-1782>`_
+
+  * `changes in dockerinfo file <https://gerrit.acumos.org/r/#/c/2953/>`_
+
+* `ACUMOS-1382: Create k8s (Kubernetes) template from Blueprint <https://jira.acumos.org/browse/ACUMOS-1382>`_
+
+  * `Updated CDS 1.18.1 version <https://gerrit.acumos.org/r/#/c/2930/>`_
+
+* `ACUMOS-1289: Deploy model to Kubernetes Environment <https://jira.acumos.org/browse/ACUMOS-1289>`_
+
+  * `Update release notes <https://gerrit.acumos.org/r/3039>`_
+
 --------------------------------
 Version 0.0.9, 24 September 2018
 --------------------------------
-Create k8s (Kubernetes) template from Blueprint(ACUMOS-1382)
-
 
 Released version as of code freeze (M4).
 
@@ -53,6 +78,19 @@ Initial release of the kubernetes-client component, per the design for
 ...........................................
 Private-Kubernetes-Deployment Support Tools
 ...........................................
+
+---------------------------
+Version 0.2, 4 October 2018
+---------------------------
+
+Released version as of Release Candidate 0 (RC0).
+
+* `ACUMOS-1289: Deploy model to Kubernetes Environment <https://jira.acumos.org/browse/ACUMOS-1289>`_
+
+  * `Update release notes <https://gerrit.acumos.org/r/3039>`_
+  * `Align design doc with current implementation <https://gerrit.acumos.org/r/#/c/2940/>`_
+
+    * Patch dockerinfo.json as workaround for `ACUMOS-1791 <https://jira.acumos.org/browse/ACUMOS-1791>`_
 
 ------------------------------
 Version 0.1, 22 September 2018
