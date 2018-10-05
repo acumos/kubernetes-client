@@ -23,19 +23,16 @@ Kubernetes Client Release Notes
 ...........................
 Kubernetes-Client Component
 ...........................
------------------------------
-Version 1.0.0, 5 October 2018
------------------------------
-version number need to greater than 1 for release
 
 -----------------------------
-Version 0.1.3, 4 October 2018
+Version 1.0.0, 5 October 2018
 -----------------------------
 
 Released version as of Release Candidate 0 (RC0).
 
 * `ACUMOS-1792: K8S Client Fixes needed in solution.yaml <https://jira.acumos.org/browse/ACUMOS-1792>`_
 
+  * `update version for greater than 1 <https://gerrit.acumos.org/r/#/c/3071/>`_
   * `Add double quates in value filed <https://gerrit.acumos.org/r/#/c/3012/>`_
   * `Add Nginx detail in solution yaml file <https://gerrit.acumos.org/r/#/c/2971/>`_
 
