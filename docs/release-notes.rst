@@ -23,6 +23,10 @@ Kubernetes Client Release Notes
 ...........................
 Kubernetes-Client Component
 ...........................
+-----------------------------
+Version 1.0.0, 5 October 2018
+-----------------------------
+version number need to greater than 1 for release
 
 -----------------------------
 Version 0.1.3, 4 October 2018
@@ -45,7 +49,7 @@ Released version as of Release Candidate 0 (RC0).
 
 * `ACUMOS-1382: Create k8s (Kubernetes) template from Blueprint <https://jira.acumos.org/browse/ACUMOS-1382>`_
 
-  * `Updated CDS 1.18.1 version <https://gerrit.acumos.org/r/#/c/2930/>`_
+  * `Updated CDS 1.18.2 version <https://gerrit.acumos.org/r/#/c/2930/>`_
 
 * `ACUMOS-1289: Deploy model to Kubernetes Environment <https://jira.acumos.org/browse/ACUMOS-1289>`_
 
