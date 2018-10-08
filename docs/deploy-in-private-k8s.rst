@@ -55,9 +55,18 @@ over time can be relaxed or modified, to support other types of k8s environments
   * user manual invocation of the deployment process on the k8s master, using a
     downloadable solution package including:
 
-    * a deployment script which the user can run to start the deployment
-    * a k8s template for the solution
-    * a model blueprint file as created today by the Acumos Design Studio
+    * a kubernetes cluster setup script which the user can run to install a
+      basic single- or mulit-node kubernetes cluster
+    * a deployment script which the user can run to start the deployment in the
+      installed or otherwise pre-existing kubernetes cluster
+    * a k8s template for the solution (solution.yaml)
+    * a model blueprint file and dockerinfo file as created by the Acumos Design
+      Studio, and used by the Blueprint Orchestrator (referred to here and in
+      solution.yaml files as the Model Connector) to route model messages through
+      the set of model microservices
+    * if the solution contains the "Proto Viewer" (referred to here and in
+      solution.yaml files as the Probe), a set of folders containing the
+      protobuf interface specification for each model microservice
 
 * the k8s cluster is deployed (or will be) on a linux variant host OS. Ubuntu
   and Centos 7 will be specifically tested/supported.
@@ -88,8 +97,9 @@ The private-k8s-deployment features planned for delivery in the current release
 private-k8s-deployment depends upon these related features to be delivered in
 the Athena release:
 
-* Acumos portal-marketplace support for a new "deploy to private kubernetes"
-  option for a solution
+* Acumos portal-marketplace support for a new "deploy to local" option for a
+  solution
+
 * A new Acumos component, the "docker-proxy", which provides a user's kubernetes
   cluster to pull docker images from an Acumos platform Nexus repository
 
@@ -103,12 +113,22 @@ includes a composite solution, Data Broker, and Probe:
 
 .. image:: images/private-k8s-client-arch.png
 
+** Figure 1: Typical Deployment with all components deployed **
+
+The following diagram illustrates the functional components, interfaces, and
+interaction of the components for a typical private-k8s-deployment process that
+includes a composite solution and Probe, but no Data Broker:
+
+.. image:: images/private-k8s-client-arch-no-databroker.png
+
+** Figure 2: Typical Deployment with all components except for Data Broker **
+
 A summary of the process steps, with conditional statements illustrating where
 the process varies depending upon the type of solution (simple or composite),
 and inclusion of specific optional features (Data Broker, Probe):
 
 #. At the Acumos platform, the user selects "deploy to local" (in the current
-   release this is limited to a "private k8s cloud").
+   release this is limited to a private kubernetes cluste).
 
    * A: the user selects the "Download Solution Package" button
    * B: the portal-marketplace calls the /getSolutionZip API of the k8s-client
@@ -135,7 +155,8 @@ and inclusion of specific optional features (Data Broker, Probe):
         model microservice container (by its container name) in the solution,
         within which is the "model.proto" artifact for the microservice
 
-#. If needed, the user installs a k8s cluster by running the command
+#. If needed, the user installs a k8s cluster by running the command, optionally
+   specifying a set of hosts on which to deploy a multi-node kubernetes cluster
 
 .. code-block:: bash
 
@@ -149,25 +170,34 @@ and inclusion of specific optional features (Data Broker, Probe):
      * the path to folder where solution.zip was unpacked; in the
        example below the user is in the folder where solution.zip was unpacked,
        thus the solution.yaml is in location "."
-     * the user's credentials on the Acumos platform, as needed to authorize the
-       user's docker client to pull solution microservice images during
-       deployment
+     * credentials as needed to authorize the user's docker client to pull
+       solution microservice images during deployment
+
+       * NOTE: for the Athena release, a single set of credentials are provided
+         for all platform users. The next release will leverage the specific
+         user's credentials on the Acumos platform.
+
      * if the Acumos Generic Data Broker was included in the solution, the data
        source (file or URL) that the Data Broker should use
 
 .. code-block:: bash
 
-  bash deploy.sh . suedadev ka93h18 data.csv
+  bash deploy.sh . 73f7fc0f-7a89-4ae9-a05d-5eb395d8b565 dc91194c-919a-4b47-b73b-e372c51ddff6
 ..
 
-   * B: deploy.sh logs into the Acumos docker registry via the docker-proxy,
-     using the provided user credentials
-   * C: the docker-proxy calls the /api/auth/jwtToken API of the
-     portal-marketplace to verify that the user is registered on the platform,
-     and confirms login success to the docker client.
+   * B: deploy.sh logs into the Acumos docker registry via the docker-proxy
+     using the provided credentials
+   * C: the docker-proxy validates the docker login credentials provided by the
+        user, and confirms login success to the docker client
+
+     * NOTE: the next release will leverage the specific user's credentials on
+       the Acumos platform, as the docker-proxy will call the /api/auth/jwtToken
+       API of the portal-marketplace to verify that the user is registered on
+       the platform, and only then confirm login success to the docker client.
+
    * D: deploy.sh logs into the Acumos project docker registry, using the
      Acumos project credentials
-   * E: if the solution includes the modelconnector (i.e. is a composite
+   * E: if the solution includes the Model Connector (i.e. is a composite
      solution), deploy.sh copies the microservice folder to /var/acumos and
      updates the blueprint.json with the location of the model.proto files as
      they will be deployed by the embedded nginx server.
@@ -197,7 +227,14 @@ and inclusion of specific optional features (Data Broker, Probe):
      * invokes the Model Connector /putBlueprint API with blueprint.json
 
    * K: if the solution includes the Data Broker, the Model Connector calls the
-     Data Broker /pullData API to start retrieval of test/training data
+     Data Broker /pullData API to start retrieval of test/training data.
+     Otherwise, as shown in "Figure 2" above, the user will start sending data
+     directly to the Model Connector, possibly using tools such as the
+     test-model.sh script provided in the kubernetes-client repo.
+
+     * test-model.sh is intended to simplify interaction with models that take
+       input data in CSV form. Additional types of input (e.g. images) will be
+       supported in future releases.
 
 Solution operation proceeds, with data being routed into the model microservice(s)
 by the following, as applicable to the solution:
@@ -222,7 +259,7 @@ microservices:
 Other Acumos component dependencies, with related impacts in this release:
 
 * portal-marketplace: provides the user with a download link to the
-  "setup_k8s.sh" script, and a "deploy to private kubernetes" dialog that allows
+  "setup_k8s.sh" script, and a "deploy to local" dialog that allows
   the user to download the solution.zip package
 
 Other Acumos component dependencies, used as-is:
@@ -328,10 +365,10 @@ docker pull API of:
 Portal User Authentication
 ++++++++++++++++++++++++++
 
-The docker-proxy service will call the portal-marketplace /api/auth/jwtToken API
-to verify that the user running the deploy.sh script is an actual registered
-user of the Acumos platform, thus is allowed to access docker images from the
-docker registry configured for the Acumos platform.
+NOTE: the next release will leverage the specific user's credentials on the
+Acumos platform, as the docker-proxy will call the /api/auth/jwtToken API of
+the portal-marketplace to verify that the user is registered on the platform,
+and only then confirm login success to the docker client.
 
 +++++++++++++++++++
 Solution Controller
@@ -369,7 +406,7 @@ package:
   * create a kubernetes service+deployment template as solution.yaml including
     all the solution components included in blueprint.json. See below for an
     example.
-  * For a solution that does not include the databroker, the modelconnector
+  * For a solution that does not include the Data Broker, the Model Connector
     service will be assigned a "type: NodePort" port with nodePort value of
     30855, so that data can be directly pushed to the solution
   * create a dockerinfo.json file using the example below
@@ -382,23 +419,27 @@ package:
   "acumos.example.com:35001" in the examples below
 * retrieve the current deploy.sh script from the Acumos github mirror, at
   https://raw.githubusercontent.com/acumos/kubernetes-client/master/deploy/private/deploy.sh
+* retrieve the current setup_k8s.sh script from the Acumos github mirror, at
+  https://raw.githubusercontent.com/acumos/kubernetes-client/master/deploy/private/setup_k8s.sh
 * create a zip archive as solution.zip containing:
 
   * deploy.sh
   * solution.yaml
   * for a composite solution:
 
-    * databroker.json
     * blueprint.json
+    * dockerinfo.json
+    * databroker.json (if Data Broker is included in the solution)
     * a "microservice" subfolder, with subfolders named for each model
-      microservice, containing the model.proto for that model
+      microservice, containing the model.proto for that model (if Probe is
+      included in the solution)
 
 * return the solution.zip as /getSolutionZip API response
 
 Design notes for the solution.yaml structure:
 
 * to support distribution of solution microservices and other Acumos components
-  (databroker, modelconnector, probe) across nodes in multi-node kubernetes
+  (Data Broker, Model Connector, Probe) across nodes in multi-node kubernetes
   clusters, each microservice and the Acumos components are deployed using
   a specific service and related deployment spec.
 * services which require external exposure on the cluster are provided nodePort
@@ -407,13 +448,14 @@ Design notes for the solution.yaml structure:
   * simple solution microservices, to expose its protobuf API
   * for composite solutions, as applies to the specific solution design
 
-    * databroker (for its API)
-    * modelconnector (for receiving pushed model data, when databroker is N/A)
+    * Data Broker (if included, for its API)
+    * Model Connector (for receiving pushed model data, when Data Broker is N/A)
     * any model microservices that require external exposure for receiving data
-    * probe (for its UI)
+    * Probe (for its UI)
 
-Example of the generated solution.yaml template for a simple solution. Notes on
-the template attributes:
+Following are a series of examples of solution.yaml templates, from simple to
+complex. The first is an example of the generated solution.yaml template for a
+simple solution. Notes on the template attributes:
 
 * the model microservice is directly exposed at NodePort 30333, in the default
   range for kubernetes nodePorts
@@ -426,7 +468,7 @@ the template attributes:
   does not conflict with other pods on the kubernetes cluster
 * the imagePullSecrets value "acumos-registry" refers to the cached credentials
   for the user for access to the Acumos platform docker registry
-* so that the model microservice images and databroker image (in a later
+* so that the model microservice images and Data Broker image (in a later
   example) can be pulled from the Acumos platform repository, the host and port
   (default 30883) in the image name are set to values for the docker-proxy, as
   specified in the environment section of the kubernetes-client template
@@ -437,10 +479,10 @@ the template attributes:
   kind: Service
   metadata:
     namespace: acumos
-    name: mymodel
+    name: padd
   spec:
     selector:
-      app: mymodel
+      app: padd
     type: NodePort
     ports:
     - name: protobuf-api
@@ -452,41 +494,41 @@ the template attributes:
   kind: Deployment
   metadata:
     namespace: acumos
-    name: mymodel
+    name: padd
     labels:
-      app: mymodel
+      app: padd
   spec:
     replicas: 1
     selector:
       matchLabels:
-        app: mymodel
+        app: padd
     template:
       metadata:
         labels:
-          app: mymodel
+          app: padd
       spec:
         imagePullSecrets:
         - name: acumos-registry
         containers:
-        - name: mymodel
-          image: acumos.example.com:30883/mymodel:1
+        - name: padd
+          image: acumos.example.com:30883/padd_cee0c147-3c64-48cd-93ae-cdb715a5420c:3
           ports:
           - name: protobuf-api
             containerPort: 3330
 ..
 
 Example of the generated solution.yaml template for a complex (composite)
-solution with two model microservices and modelconnector. Notes on the template
+solution with two model microservices and Model Connector. Notes on the template
 attributes:
 
-* the model microservices are accessed via the modelconnector, which is directly
+* the model microservices are accessed via the Model Connector, which is directly
   exposed at NodePort 30555, and internal to the cluster namespace at port 8555,
-  as specified in the Acumos project build process for the databroker image
+  as specified in the Acumos project build process for the Data Broker image
 * the names given to the services defined for each model microservice serve as
   resolvable hostnames within the cluster namespace, so their protobuf-api
-  interfaces can be accessed by other pods in the cluster e.g. modelconnector,
+  interfaces can be accessed by other pods in the cluster e.g. Model Connector,
   independent of the assigned service IP
-* the image name (repository and image version) for the modelconnector is set
+* the image name (repository and image version) for the Model Connector is set
   by an environment parameter in the kubernetes-client template
 
 .. code-block:: yaml
@@ -622,20 +664,20 @@ attributes:
 ..
 
 Example of the generated solution.yaml template for a complex (composite)
-solution with two model microservices, databroker, modelconnector, and probe.
+solution with two model microservices, Data Broker, Model Connector, and Probe.
 Notes on the template attributes:
 
-* the model microservices are accessed via the databroker, which is exernally
+* the model microservices are accessed via the Data Broker, which is exernally
   exposed at NodePort 30555
-* the databroker, modelconnector, and probe are exposed internal to the cluster
+* the Data Broker, Model Connector, and Probe are exposed internal to the cluster
   at the ports specified in the Acumos project build processes for those images
-* the modelconnector is also externally exposed at NodePort 30555 so that it can
+* the Model Connector is also externally exposed at NodePort 30555 so that it can
   be configured by deploy.sh via its APIs
-* the probe is also exposed externally at NodePort 30800 so that its UI can be
+* the Probe is also exposed externally at NodePort 30800 so that its UI can be
   access by the user's web browser
-* the image name (repository and image version) for the probe is set by an
+* the image name (repository and image version) for the Probe is set by an
   environment parameter in the kubernetes-client template
-* the databroker image name is set per the "datasource" type model that the user
+* the Data Broker image name is set per the "datasource" type model that the user
   selected in creating the composite solution
 
 .. code-block:: yaml
@@ -979,23 +1021,23 @@ host, using the example command:
 
 .. code-block:: shell
 
-  bash deploy.sh <acumos username> <acumos password> <datasource>
+  bash deploy.sh <docker-proxy username> <docker-proxy password> <datasource>
 
 where:
 
-* <acumos username> is the user's account username on the Acumos platform
+* docker-proxy username> is the user's account username on the Acumos platform
 
   * NOTE: for the Athena release, this must be a single value set for the
     platform in the installation of the docker-proxy, as described under
     `Operations User Guide`_
 
-* <acumos password> is the user's account password on the Acumos platform
+* <docker-proxy password> is the user's account password on the Acumos platform
 
   * NOTE: for the Athena release, this must be a single value set for the
     platform in the installation of the docker-proxy, as described under
     `Operations User Guide`_
 
-* <datasource> is where the databroker will be instructed to obtain data to
+* <datasource> is where the Data Broker will be instructed to obtain data to
   feed into the solution, and can be a file path or a URL
 
 deploy.sh will then take the following actions to deploy the solution:
@@ -1004,36 +1046,36 @@ deploy.sh will then take the following actions to deploy the solution:
   solution.yaml, using the "image" attribute of any model microservice
 * if not already configured, configure the docker service to allow access to the
   Acumos platform docker proxy as an insecure registry.
-* login to the Acumos platform docker proxy using the Acumos platform username
+* login to the Acumos platform docker proxy using the docker-proxy username
   and password provided by the user
 * login to the Acumos project docker registry (current credentials are provided
   as default values in deploy.sh)
 * copy the subfolders under "microservice" from the unpacked solution.zip to
   /var/acumos
-* update databroker.json per the datasource selected by the user
+* update Data Broker.json per the datasource selected by the user
 
   * if the user provided a file path as datasource, replace the hostpath
-    attribute of the databroker deployment in solution.yaml with the
+    attribute of the Data Broker deployment in solution.yaml with the
     user-provided file path, replace the "local_system_data_file_path" attribute
-    in databroker.json with the path "/var/acumos/datasource", and set the
+    in Data Broker.json with the path "/var/acumos/datasource", and set the
     "target_system_url" attribute to ""
   * if the user provided a URL as datasource, set the "target_system_url"
-    attribute in databroker.json to the URL, and set the
+    attribute in Data Broker.json to the URL, and set the
     "local_system_data_file_path" attribute to ""
 
 * create a namespace "acumos" using kubectl
 * create a secret "acumos-registry" using ~/.docker/config.json
 * invoke kubectl to deploy the services and deployments in solution.yaml
-* monitor the status of the databroker service and deployment, and when they are
-  running, send databroker.json to the databroker via its /configDB API
+* monitor the status of the Data Broker service and deployment, and when they are
+  running, send Data Broker.json to the Data Broker via its /configDB API
 * monitor the status of all other services and deployments, and when they are
   running
 
   * create dockerinfo.json with the service name, assigned IP address, and
     port of each service defined in solution.yaml
-  * send dockerinfo.json to the modelconnector service via the /putDockerInfo
+  * send dockerinfo.json to the Model Connector service via the /putDockerInfo
     API
-  * send blueprint.json to the modelconnector service via the /putBlueprint API
+  * send blueprint.json to the Model Connector service via the /putBlueprint API
 
 ---------------------
 Operations User Guide
@@ -1053,6 +1095,12 @@ The Boreas release will support authentication of users using their Acumos
 platform credentials. As a result of this design limitation,the current
 platform support for the docker-proxy is intended for use in private Acumos
 installations.
+
+However, since Acumos platforms installed for company use typically are viewed
+as private to that company, this limitation should not impact the usefullness
+of the current release support for deployment in kubernetes. Further, admins
+can change the docker-proxy credentials at any time, through a process described
+below under `Updating the docker-proxy credentials`_.
 
 ................................
 Manual docker-proxy Installation
@@ -1150,7 +1198,7 @@ To test operation of the private-k8s-deployment, follow these steps:
 * when viewing the solution, select the "deploy to local" option as described above
 * save the downloaded solution.zip to your host where you will deploy it
 * unzip the solution.zip file
-* if you don't have a private k8scluster (for which you have admin rights on the
+* if you don't have a private k8s cluster (for which you have admin rights on the
   k8s master node), install a private cluster
 
 .. code-block:: shell
