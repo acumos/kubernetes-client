@@ -1082,7 +1082,7 @@ Operations User Guide
 ---------------------
 
 Platform support for private-k8s-deployment is automatically installed as part
-of the `Acumos AIO (all-in-one) <https://docs.acumos.org/en/latest/AcumosUser/oneclick-deploy/user-guide.html>`_
+of the :doc:`Acumos AIO (all-in-one) <../../../AcumosUser/oneclick-deploy/user-guide>`
 deployment process. For manual installations, the docker-proxy component needs
 to be manually installed using the "deploy.sh" script from the Acumos
 system-integration repo. The subsections below address how to deploy the
