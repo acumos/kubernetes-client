@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "15f966d4_d98c15a9",
+        "filename": "docs/deploy-in-private-k8s.rst",
+        "patchSetId": 1
+      },
+      "lineNbr": 1085,
+      "author": {
+        "id": 51
+      },
+      "writtenOn": "2018-10-10T14:53:49Z",
+      "side": 1,
+      "message": "checking https://logs.acumos.org/production/vex-yul-acumos-jenkins-1/documentation-rtd-verify-master/1825/html/submodules/kubernetes-client/docs/deploy-in-private-k8s.html#testing-private-k8s-deployment this link is not appearing",
+      "range": {
+        "startLine": 1085,
+        "startChar": 0,
+        "endLine": 1085,
+        "endChar": 83
+      },
+      "revId": "e2cc325fac339cb8084e05cc4f34c7ea4f619d7e",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
