@@ -22,6 +22,29 @@
       "revId": "e2cc325fac339cb8084e05cc4f34c7ea4f619d7e",
       "serverId": "655300a2-7a56-4504-9153-881edd907bea",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0ce62b35_f73a2932",
+        "filename": "docs/deploy-in-private-k8s.rst",
+        "patchSetId": 1
+      },
+      "lineNbr": 1085,
+      "author": {
+        "id": 94
+      },
+      "writtenOn": "2018-10-10T16:23:17Z",
+      "side": 1,
+      "message": "../../../../AcumosUser/oneclick-deploy/user-guide  - this may be  right \n\nyou have to think of how the kubernetes client fits into the documentation project - the submodules directory and move upwards",
+      "range": {
+        "startLine": 1085,
+        "startChar": 7,
+        "endLine": 1085,
+        "endChar": 83
+      },
+      "revId": "e2cc325fac339cb8084e05cc4f34c7ea4f619d7e",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
     }
   ]
 }
