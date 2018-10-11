@@ -81,6 +81,20 @@ Initial release of the kubernetes-client component, per the design for
 Private-Kubernetes-Deployment Support Tools
 ...........................................
 
+------------------------------
+Version 1.0.0, 11 October 2018
+------------------------------
+
+* `ACUMOS-1893: test-model.sh doesn't work with simple model <https://jira.acumos.org/browse/ACUMOS-1893>`_
+
+  * `Fix test-model.sh for simple models <https://gerrit.acumos.org/r/#/c/3156/>`_
+
+
+* `ACUMOS-1289: Deploy model to Kubernetes Environment <https://jira.acumos.org/browse/ACUMOS-1289>`_
+
+  * `Fix doc link format <https://gerrit.acumos.org/r/#/c/3126/>`_
+  * `Update user guide per RC0 version <https://gerrit.acumos.org/r/#/c/3099/>`_
+
 ---------------------------
 Version 0.2, 4 October 2018
 ---------------------------
