@@ -76,7 +76,10 @@ EOF
   docker_login https://nexus3.acumos.org:10004 docker docker
   docker_login https://nexus3.acumos.org:10003 docker docker
   docker_login https://nexus3.acumos.org:10002 docker docker
-  sudo chown -R $USER:$USER ~/.docker
+  if [[ "$dist" == "ubuntu" ]]; then dns='kube-dns'
+    # .docker is created in $HOME on Ubuntu
+    sudo chown -R $USER:$USER ~/.docker
+  fi
 }
 
 function update_datasource() {
@@ -146,10 +149,17 @@ prepare_k8s() {
   fi
 
   log "Create k8s secret for image pulling from docker using ~/.docker/config.json"
-   b64=$(cat ~/.docker/config.json | base64 -w 0)
+  if [[ "$dist" == "ubuntu" ]]; then dns='kube-dns'
+    # .docker is created in $HOME on Ubuntu
+    b64=$(cat ~/.docker/config.json | base64 -w 0)
+  else
+    # .docker is created in /root on Centos
+    b64=$(sudo cat /root/.docker/config.json | base64 -w 0)
+  fi
+
   if [[ $(kubectl get secrets -n acumos | grep -c 'acumos-registry ') == 1 ]]; then
     kubectl delete secret -n acumos acumos-registry
-   fi
+  fi
   cat << EOF >acumos-registry.yaml
 apiVersion: v1
 kind: Secret
@@ -214,6 +224,7 @@ username=$2
 password=$3
 datasource=$4
 
+dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 export WORK_DIR=$(pwd)
 cd $solution
 prepare_docker

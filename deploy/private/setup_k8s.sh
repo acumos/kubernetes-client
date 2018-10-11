@@ -125,9 +125,16 @@ else
   sudo yum install -y epel-release
   sudo yum update -y
   sudo yum install -y wget git
-  echo; echo "prereqs.sh: ($(date)) Install latest docker"
+  if [[ "$(rpm -qa | grep docker-1)" != "" ]]; then
+    echo; echo "Remove prior docker install"
+    sudo yum remove -y docker docker-common
+  fi
+  echo; echo "prereqs.sh: ($(date)) Install latest docker-ce"
   # per https://docs.docker.com/engine/installation/linux/docker-ce/centos/#install-from-a-package
-  sudo yum install -y docker
+  sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+  sudo yum-config-manager --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+  sudo yum install -y docker-ce
   sudo systemctl enable docker
   sudo systemctl start docker
 #  wget https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-17.09.0.ce-1.el7.centos.x86_64.rpm
@@ -170,7 +177,7 @@ function setup_k8s_master() {
   # --pod-network-cidr=192.168.0.0/16 is required for calico; this should not 
   # conflict with your server network interface subnets
   log "Reset kubeadm in case pre-existing cluster"
-  sudo kubeadm reset
+  sudo kubeadm reset -f
   # Start cluster
   log "Workaround issue '/etc/kubernetes/manifests is not empty'"
 	mkdir ~/tmp
@@ -189,6 +196,10 @@ function setup_k8s_master() {
   sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
   export KUBECONFIG=$HOME/.kube/config
+
+  log "Allow pod scheduling on master (nodeSelector will be used to limit them)"
+  kubectl taint node $HOSTNAME node-role.kubernetes.io/master:NoSchedule-
+
   # Deploy pod network
   log "Deploy calico as CNI"
   # Updated to deploy Calico 2.6 per the create-cluster-kubeadm guide above
@@ -204,6 +215,12 @@ function setup_k8s_master() {
   pods=$(kubectl get pods --namespace kube-system | grep -c calico)
   while [[ $pods -lt 3 ]]; do
     log "all calico pods are not yet created. Waiting 10 seconds"
+    if [[ "$dist" != "ubuntu" ]]; then
+      if [[ "$(kubectl describe nodes | grep node.kubernetes.io/not-ready:NoSchedule)" != "" ]]; then
+        # Added for Centos 7 (CNI and DNS would not start otherwise)
+        kubectl taint node $HOSTNAME node.kubernetes.io/not-ready:NoSchedule-
+      fi
+    fi
     sleep 10
     pods=$(kubectl get pods --namespace kube-system | grep -c calico)
   done
@@ -220,17 +237,17 @@ function setup_k8s_master() {
     log "$pod status is $status"
   done
 
-  log "Wait for kubedns to be Running"
-  kubedns=$(kubectl get pods --namespace kube-system | awk '/kube-dns/ {print $3}')
-  while [[ "$kubedns" != "Running" ]]; do
-    log "kube-dns status is $kubedns. Waiting 60 seconds"
-    sleep 60
-    kubedns=$(kubectl get pods --namespace kube-system | awk '/kube-dns/ {print $3}')
+  log "Wait for DNS to be Running"
+  if [[ "$dist" == "ubuntu" ]]; then dns='kube-dns'
+  else dns='coredns'
+  fi
+  dnspod=$(kubectl get pods --namespace kube-system | awk "/$dns/ {print \$3}" | head -1)
+  while [[ "$dnspod" != "Running" ]]; do
+    log "$dns status is $dnspod. Waiting 10 seconds"
+    sleep 10
+    dnspod=$(kubectl get pods --namespace kube-system | awk "/$dns/ {print \$3}" | head -1)
   done
-  log "kube-dns status is $kubedns"
-
-  log "Allow pod scheduling on master (nodeSelector will be used to limit them)"
-  kubectl taint node $HOSTNAME node-role.kubernetes.io/master:NoSchedule-
+  log "$dns status is $dnspod"
 
   log "Label node $HOSTNAME as 'role=master'"
   kubectl label nodes $HOSTNAME role=master
@@ -273,7 +290,7 @@ function setup_k8s_workers() {
 # Centos: "Failed to start ContainerManager failed to initialize top
 # level QOS containers: root container /kubepods doesn't exist"
   tee start_worker.sh <<EOF
-sudo kubeadm reset
+sudo kubeadm reset -f
 sudo $k8s_joincmd
 EOF
 

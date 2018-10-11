@@ -19,16 +19,23 @@
 #
 #. What this is: Script to aid in testing an Acumos solution/model as deployed
 #. by deploy.sh
-#. 
+#.
 #. Prerequisites:
-#. - Ubuntu Xenial or Centos 7 server
+#. - Ubuntu Xenial server
 #. - Via the Acumos platform, download a solution.zip deployment package for
-#.   a specific solution/revision, and unzip the package into a folder.
+#.   a specific model, unzip the package into a folder, and enter that folder.
+#. - For simple models, also download the two artifacts below from the Acumos
+#.   portal into the same folder, and refer to them when calling test-model.sh
+#.   "model name".proto, e.g. "square-9.proto"
+#.   "TOSCAPROTOBUF-n.json" e.g. TOSCAPROTOBUF-9.json
 #. - Install the solution via deploy.sh (see the script for details)
 #. Usage:
-#. - bash test-model.sh "<input>" "<host>"
+#. - bash test-model.sh "<input>" "<host>" [.proto] [.json]
 #.   input: quoted string of test data to pass to the model
-#.   host: host (name or IP address) where the model is deployed at port 30555
+#.   host: host (name or IP address) where the model is deployed
+#.   .proto: for a simple model, the filename for "model name".proto
+#.   .json: for a simple model, the filename "TOSCAPROTOBUF-n".json
+#.
 
 trap 'fail' ERR
 
@@ -38,27 +45,20 @@ function fail() {
 }
 
 function log() {
-  set +x
   fname=$(caller 0 | awk '{print $2}')
   fline=$(caller 0 | awk '{print $1}')
   echo; echo "$fname:$fline ($(date)) $1"
-  set -x
 }
 
 function setup_prereqs() {
-  if [[ "$(dpkg -l | grep jq)" == "" ]]; then
-    log "Install jq"
-    sudo apt install -y jq
-  fi
-
-  if [[ "$(dpkg -l | grep golang-go)" == "" ]]; then
-    log "Install golang-go"
-    sudo apt install -y golang-go
-  fi
-
-  if [[ "$(dpkg -l | grep unzip)" == "" ]]; then
-    log "Install unzip"
-    sudo apt install -y unzip
+  if [[ "$dist" == "ubuntu" ]]; then
+    if [[ "$(dpkg -l | grep -e 'jq' -e 'golang-go' -e 'unzip')" == "" ]]; then
+      sudo apt install -y jq golang-go unzip
+    fi
+  else
+    if [[ "$(rpm -qa | grep -e 'jq' -e 'golang-go' -e 'unzip')" == "" ]]; then
+      sudo yum install -y jq golang-go unzip
+    fi
   fi
 
   if [[ "$(ls ~/protoc/bin/protoc)" == "" ]]; then
@@ -82,37 +82,64 @@ function find_node() {
 }
 
 function test_model() {
-  firstms=$(jq -r '.input_ports[0].container_name' blueprint.json)
-  find_node $firstms
-  if [[ $(jq -r ".nodes[$node].node_type" blueprint.json) == DataBroker ]]; then
-    firstms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
+  if [[ -f blueprint.json ]]; then
+    # Composite model
+    firstms=$(jq -r '.input_ports[0].container_name' blueprint.json)
     find_node $firstms
+    if [[ $(jq -r ".nodes[$node].node_type" blueprint.json) == DataBroker ]]; then
+      firstms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
+      find_node $firstms
+    fi
+
+    firstop=$(jq -r ".nodes[$node].operation_signature_list[0].operation_signature.operation_name" blueprint.json)
+    firstmsg=$(jq -r ".nodes[$node].operation_signature_list[0].operation_signature.input_message_name" blueprint.json)
+    firstpkg=$(grep package microservice/$firstms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
+    nextms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
+    while [[ $nextms != null ]] ; do
+      find_node $nextms
+      lastms=$(jq -r ".nodes[$node].container_name" blueprint.json)
+      lastmsg=$(jq -r ".nodes[$node].operation_signature_list[0].operation_signature.output_message_name" blueprint.json)
+      lastpkg=$(grep package microservice/$lastms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
+      nextms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
+    done
+    port=$(awk '/mc-api/,/nodePort/' solution.yaml | awk '/nodePort/ {print $2}')
+    set -x
+    echo "$input" \
+      | ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
+          --proto_path=microservice/$firstms microservice/$firstms/model.proto \
+      | curl -s --request POST --header "Content-Type: application/protobuf" \
+          --data-binary @- http://$host:$port/$firstop \
+      | ~/protoc/bin/protoc --decode $lastpkg.$lastmsg \
+          --proto_path=microservice/$lastms microservice/$lastms/model.proto
+    set +x
+  else
+    # Simple model
+    firstms=$(jq -r ".service.listOfOperations[0].operationName" $json)
+    firstop=$firstms
+    firstmsg=$(jq -r ".service.listOfOperations[0].listOfInputMessages[0].inputMessageName" $json)
+    firstpkg=$(jq -r ".packageName" $json)
+    lastms=$firstms
+    lastmsg=$(jq -r ".service.listOfOperations[0].listOfOutputMessages[0].outPutMessageName" $json)
+    lastpkg=$firstpkg
+    port=$(grep nodePort solution.yaml | cut -d ':' -f 2 | sed 's/ //')
+    set -x
+    echo "$input" \
+      | ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
+          --proto_path=. $proto \
+      | curl -s --request POST --header "Content-Type: application/protobuf" \
+          --data-binary @- http://$host:$port/$firstop \
+      | ~/protoc/bin/protoc --decode=$lastpkg.$lastmsg \
+          --proto_path=. $proto
+    set +x
   fi
 
-  firstop=$(jq -r ".nodes[$node].operation_signature_list[0].operation_signature.operation_name" blueprint.json)
-  firstmsg=$(jq -r ".nodes[$node].operation_signature_list[0].operation_signature.input_message_name" blueprint.json)
-  firstpkg=$(grep package microservice/$firstms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
-  nextms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
-  while [[ $nextms != null ]] ; do
-    find_node $nextms
-    lastms=$(jq -r ".nodes[$node].container_name" blueprint.json)
-    lastmsg=$(jq -r ".nodes[$node].operation_signature_list[0].operation_signature.output_message_name" blueprint.json)
-    lastpkg=$(grep package microservice/$lastms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
-    nextms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
-  done
-  set -x
-  echo "$input" \
-		| ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
-		    --proto_path=microservice/$firstms microservice/$firstms/model.proto \
-		| curl -s --request POST --header "Content-Type: application/protobuf" \
-		    --data-binary @- http://$host:30555/$firstop \
-		| ~/protoc/bin/protoc --decode $lastpkg.$lastmsg \
-		    --proto_path=microservice/$lastms microservice/$lastms/model.proto
-  set +x
 }
 
 input="$1"
 host=$2
+proto=$3
+json=$4
 
+dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 setup_prereqs
 test_model

@@ -1194,35 +1194,66 @@ Testing private-k8s-deployment
 
 To test operation of the private-k8s-deployment, follow these steps:
 
-* create or select a composite solution to deploy
+* create or select a simple or composite solution to deploy
+
+  * NOTE: make sure that
+
+    * before you create a composite solution, or select a
+      simple solution to deploy, that the microservice generation phase is
+      complete for the model(s) that are includes. You can check this when viewing
+      model details, under "Model Artifacts". You should see an artifact named
+      <name>_<SolutionId>:<version>, e.g.
+      "iris_0740751d-34fd-47fb-b4da-c71b27bb9bf7:1".
+    * before you try to deploy a composite solution, you select the "validate"
+      button in the design studio. This creates the blueprint.json file, which
+      is essential for deployment to work.
+
 * when viewing the solution, select the "deploy to local" option as described above
+
+  * NOTE: If you get an error when downloading the solution.zip file, there are
+    two possible causes:
+
+    * As noted above, the model microservice image(s) may not have been
+      completely created yet. Check this as above, and for a simple solution
+      just wait until the image shows up in the artifact list. For a composite
+      solution, you will need to recreate the solution and save a new version of
+      it.
+    * As noted above, for a composite solution, verify that you had selected the
+      "validate" button. To be sure, you can check for the presence of an
+      artifact named BLUEPRINT-<SolutionId>-<version>.json. If that artifact is
+      not present, reload the solution in the Design Studio and select
+      "validate". The blueprint file should then be created.
+
 * save the downloaded solution.zip to your host where you will deploy it
 * unzip the solution.zip file
 * if you don't have a private k8s cluster (for which you have admin rights on the
   k8s master node), install a private cluster
 
-.. code-block:: shell
+  .. code-block:: shell
 
-  bash setup_k8s.sh
-..
+    bash setup_k8s.sh
+  ..
 
 * when the k8s cluster has been installed, deploy the solution
 
-.. code-block:: shell
+  .. code-block:: shell
 
- bash deploy.sh . <ACUMOS_DOCKER_PROXY_USERNAME> <ACUMOS_DOCKER_PROXY_PASSWORD>
-..
+   bash deploy.sh . <ACUMOS_DOCKER_PROXY_USERNAME> <ACUMOS_DOCKER_PROXY_PASSWORD>
+  ..
 
 To test that the solution works as expected, use the applicable test harness
-as specified for the solution. For example, to verify a simple CSV-based model
-which adds two values, and squares the result, you can use the
-"`test-model.sh <https://github.com/acumos/kubernetes-client/blob/master/deploy/private/test-model.sh>`_"
-script from the Acumos kubernetes-client repo. An example is shown below. In
-the output of that script, the "+" lines show how the script communicates with
-the model using the protobuf interface, and the "d: 36" shows the output is
-calculated correctly. This verifies that the model was deployed correctly, and
-the Model Connector is able to route the protobuf messages through the sequence
-of model microservices.
+as specified for the solution, if any.
+
+For models that take CSV-formatted input, the kubernetes-client repo provides a
+bash test script
+(`test-model.sh <https://github.com/acumos/kubernetes-client/blob/master/deploy/private/test-model.sh>`_).
+
+For example, to verify a composite model which adds two values, and squares the
+result, you can use the script as below. In the output of that script, the "+"
+lines show how the script communicates with the model using the protobuf
+interface, and the "d: 36" shows the output is calculated correctly. This
+verifies that the model was deployed correctly, and the Model Connector is able
+to route the protobuf messages through the sequence of model microservices.
 
 .. code-block:: shell
 
@@ -1235,6 +1266,30 @@ of model microservices.
   + set +x
 ..
 
+For a simple model, the same script can be used with a couple of additional
+steps. Because the solution.zip package for simple solutions does not currently
+contain a blueprint.json file or set of microservice subfolders, two artifacts
+need to be manually downloaded and placed in the folder where you unzipped the
+solution.zip file:
+
+* the "model name".proto artifact: this is the protobuf interface specification
+  for the model
+* the "TOSCAPROTOBUF-n".json artifact: this is the description of the model that
+  for a composite solution would be present in blueprint.json
+
+After downloding and placing those files in the same folder where you unzipped
+the solution.zip, you can test the model as in this example:
+
+.. code-block:: shell
+
+  bash test-model.sh "d:2.0" opnfv01 square-9.proto  TOSCAPROTOBUF-9.json
+  + echo d:2.0
+  + /home/ubuntu/protoc/bin/protoc --encode=rJdqDZiRsZmWwHvgVFBWtGwvPgvuIHEM.SquareMessage --proto_path=. square-9.proto
+  + curl -s --request POST --header 'Content-Type: application/protobuf' --data-binary @- http://opnfv01:30333/square
+  + /home/ubuntu/protoc/bin/protoc --decode rJdqDZiRsZmWwHvgVFBWtGwvPgvuIHEM.SquareMessage --proto_path=. square-9.proto
+  d: 4
+  + set +x
+..
 
 To terminate a solution deployment, run:
 
