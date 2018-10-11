@@ -145,16 +145,21 @@ public class KubeServiceImpl implements KubeService  {
 		logger.debug("End getSingleImageData imageTag"+imageTag);
 		return imageTag;
 	}
-	public String getSolutionCode(String solutionId,String datasource,String userName,String dataPd) throws Exception {
+	public String getSolutionCode(String solutionId,String datasource,String userName,String dataPd){
 		logger.debug("getSolution start");
 		String toolKitTypeCode="";
+		try{
 		CommonDataServiceRestClientImpl cmnDataService=getClient(datasource,userName,dataPd);
 		MLPSolution mlpSolution = cmnDataService.getSolution(solutionId);
 			if (mlpSolution != null) {
 				logger.debug("mlpSolution.getToolkitTypeCode() "+mlpSolution.getToolkitTypeCode());
 				toolKitTypeCode=mlpSolution.getToolkitTypeCode();
 			}
-		logger.debug("getSolution End toolKitTypeCode" +toolKitTypeCode);	
+		}catch(Exception e){
+			logger.error("Error in get solution "+e.getMessage());
+			toolKitTypeCode="";
+		}
+		logger.debug("getSolution End toolKitTypeCode " +toolKitTypeCode);	
 	  return toolKitTypeCode;
 	 }	
 	/** nexusArtifactClient method is used to get connection from nexus

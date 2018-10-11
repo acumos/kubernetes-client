@@ -165,15 +165,16 @@ public class KubeController {
 	   	 log.debug("singleTargetPort "+singleTargetPort);
 	   	try{
 	   	  String solutionToolKitType=kubeService.getSolutionCode(solutionId, cmnDataUrl, cmnDataUser, cmnDataPd);
-	   	  if(solutionToolKitType!=null && !"".equals(solutionToolKitType) && !"CP".equalsIgnoreCase(solutionToolKitType)){
+	   	log.debug("solutionToolKitType "+solutionToolKitType);
+	   	  if(solutionToolKitType!=null && !"".equals(solutionToolKitType) && "CP".equalsIgnoreCase(solutionToolKitType)){
+	   		log.debug("Composite Solution Details Start");
+	   		solutionZip=kubeService.compositeSolutionDetails(dBean);
+	   		log.debug("Composite Solution Deployment End");
+	   	  }else{
 	   		log.debug("Single Solution Details Start");
 	   		String imageTag=kubeService.getSingleImageData(solutionId, revisionId, cmnDataUrl, cmnDataUser, cmnDataPd);
 	   		solutionZip=kubeService.singleSolutionDetails(dBean, imageTag, singleModelPort);
 	   		log.debug("Single Solution Details End");
-	   	  }else{
-	   		log.debug("Composite Solution Details Start");
-	   		solutionZip=kubeService.compositeSolutionDetails(dBean);
-	   		log.debug("Composite Solution Deployment End");
 	   	  }
 	   	response.setStatus(200);
 	   	}catch(Exception e){
