@@ -24,6 +24,20 @@ Kubernetes Client Release Notes
 Kubernetes-Client Component
 ...........................
 
+------------------------------
+Version 1.0.1, 11 October 2018
+------------------------------
+
+* `ACUMOS-1893: test-model.sh doesn't work with simple model <https://jira.acumos.org/browse/ACUMOS-1893>`_
+
+  * 
+
+
+* `ACUMOS-1289: Deploy model to Kubernetes Environment <https://jira.acumos.org/browse/ACUMOS-1289>`_
+
+  * `Fix doc link format <https://gerrit.acumos.org/r/#/c/3126/>`_
+  * `Update user guide per RC0 version <https://gerrit.acumos.org/r/#/c/3099/>`_
+
 -----------------------------
 Version 1.0.0, 5 October 2018
 -----------------------------
