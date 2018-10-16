@@ -25,6 +25,11 @@ Kubernetes-Client Component
 ...........................
 
 -----------------------------
+Version 1.1.0, 12 October 2018
+-----------------------------
+* ACUMOS-1884: Download solution package for deploy to local does not work for simple solution in K8S <https://jira.acumos.org/browse/ACUMOS-1884>'
+
+-----------------------------
 Version 1.0.0, 5 October 2018
 -----------------------------
 
