@@ -18,9 +18,10 @@
 # ===============LICENSE_END=========================================================
 #
 #. What this is: script to setup a kubernetes cluster with calico as cni
-#. 
+#.
 #. Prerequisites:
-#. - One or more Ubuntu Xenial or Centos 7 servers (as target k8s cluster nodes)
+#. - One or more Ubuntu Xenial (16.04) / Bionic (18.04) or Centos 7 servers
+#    (as target k8s cluster nodes)
 #. - This script downloaded to a folder on the server to be the k8s master node
 #. - key-based SSH setup between the k8s master node and other nodes
 #. - 192.168.0.0/16 should not be used on your server network interface subnets
@@ -32,6 +33,8 @@
 #.   nodes: quoted, space-separated list of k8s worker nodes. If no nodes are
 #.          specified a single all-in-one (AIO) cluster will be installed.
 #.
+
+set -x
 
 trap 'fail' ERR
 
@@ -45,6 +48,7 @@ function setup_prereqs() {
   log "Create prerequisite setup script"
   cat <<'EOG' >~/prereqs.sh
 #!/bin/bash
+set -x
 # Basic server pre-reqs
 function wait_dpkg() {
   # TODO: workaround for "E: Could not get lock /var/lib/dpkg/lock - open (11: Resource temporarily unavailable)"
@@ -53,11 +57,12 @@ function wait_dpkg() {
     sleep 1
   done
 }
-dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
+dist=$(grep -m 1 'ID=' /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
+distver=$(grep -m 1 'VERSION_ID=' /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 if [[ $(grep -c $HOSTNAME /etc/hosts) -eq 0 ]]; then
   echo; echo "prereqs.sh: ($(date)) Add $HOSTNAME to /etc/hosts"
   # have to add "/sbin" to path of IP command for centos
-  echo "$(/sbin/ip route get 8.8.8.8 | awk '{print $NF; exit}') $HOSTNAME" \
+  echo "$(/sbin/ip route get 8.8.8.8 | head -1 | sed 's/^.*src //' | awk '{print $1}') $HOSTNAME" \
     | sudo tee -a /etc/hosts
 fi
 if [[ "$dist" == "ubuntu" ]]; then
@@ -67,23 +72,40 @@ if [[ "$dist" == "ubuntu" ]]; then
   wait_dpkg; sudo apt-get update
   wait_dpkg; sudo apt-get upgrade -y
 
-  dce=$(dpkg -l | grep -c docker-ce)
-  if [[ $dce -eq 0 ]]; then
-    echo; echo "prereqs.sh: ($(date)) Install latest docker-ce"
-    # Per https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/
-    sudo apt-get remove -y docker docker-engine docker.io docker-ce
-    sudo apt-get update
-    sudo apt-get install -y \
-      apt-transport-https \
-      ca-certificates \
-      curl \
-      software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] \
-      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt-get update
-    sudo apt-get install -y docker-ce
-  fi
+  case "$distver" in
+    "16.04")
+      log "Install docker-ce if needed"
+      dce=$(/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' 'docker-ce')
+      if [[ $dce != "installed" ]]; then
+        echo; echo "prereqs.sh: ($(date)) Install latest docker-ce"
+        # Per https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/
+        sudo apt-get purge -y docker-ce docker docker-engine docker.io
+        sudo apt-get update
+        sudo apt-get install -y \
+          apt-transport-https \
+          ca-certificates \
+          curl \
+          software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] \
+          https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        sudo apt-get update
+        sudo apt-get install -y docker-ce=17.03.3~ce-0~ubuntu-xenial
+      fi
+      ;;
+    "18.04")
+      log "Install docker.io if needed"
+      sudo apt-get purge -y docker docker-engine docker-ce docker-ce-cli
+      sudo apt-get update
+      dio=$(/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' 'docker.io')
+      if [[ $dio != "installed" ]]; then
+        sudo apt-get install -y docker.io=17.12.1-0ubuntu1
+        sudo systemctl enable docker.service
+      fi
+      ;;
+    *)
+      fail "Unsupported Ubuntu version ($distver)"
+  esac
 
   echo; echo "prereqs.sh: ($(date)) Get k8s packages"
   export KUBE_VERSION=1.10.0
@@ -115,7 +137,7 @@ EOF
       sudo ufw allow 30000:32767/tcp
     fi
   fi
-  # TODO: fix need for this workaround: disable firewall since the commands 
+  # TODO: fix need for this workaround: disable firewall since the commands
   # above do not appear to open the needed ports, even if ufw is inactive
   # (symptom: nodeport requests fail unless sent from within the cluster or
   # to the node IP where the pod is assigned) issue discovered ~11/16/17
@@ -155,7 +177,7 @@ EOF
   sudo systemctl enable kubelet
   sudo systemctl start kubelet
   echo; echo "prereqs.sh: ($(date)) Install jq for API output parsing"
-  sudo yum install -y jq  
+  sudo yum install -y jq
   echo; echo "prereqs.sh: ($(date)) Set firewall rules"
   cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables = 1
@@ -174,10 +196,10 @@ function setup_k8s_master() {
   bash ~/prereqs.sh master
   # per https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
   # If the following command fails, run "kubeadm reset" before trying again
-  # --pod-network-cidr=192.168.0.0/16 is required for calico; this should not 
+  # --pod-network-cidr=192.168.0.0/16 is required for calico; this should not
   # conflict with your server network interface subnets
   log "Reset kubeadm in case pre-existing cluster"
-  sudo kubeadm reset -f
+  sudo kubeadm reset
   # Start cluster
   log "Workaround issue '/etc/kubernetes/manifests is not empty'"
 	mkdir ~/tmp
@@ -209,7 +231,7 @@ function setup_k8s_master() {
   # TODO: document process dependency
   # Failure to wait for all calico pods to be running can cause the first worker
   # to be incompletely setup. Symptom is that node_ports cannot be routed
-  # via that node (no response - incoming SYN packets are dropped). 
+  # via that node (no response - incoming SYN packets are dropped).
   log "Wait for all calico pods to be Created"
   # calico-etcd, calico-kube-controllers, calico-node
   pods=$(kubectl get pods --namespace kube-system | grep -c calico)
@@ -224,7 +246,7 @@ function setup_k8s_master() {
     sleep 10
     pods=$(kubectl get pods --namespace kube-system | grep -c calico)
   done
-  
+
   log "Wait for all calico pods to be Running"
   pods=$(kubectl get pods --namespace kube-system | awk '/calico/ {print $1}')
   for pod in $pods; do
@@ -253,11 +275,11 @@ function setup_k8s_master() {
   kubectl label nodes $HOSTNAME role=master
 
   log "Deploy kubernetes dashboard"
-  wget https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+  wget https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
   # Use "gobbling the entire file" approach to enable multi-line replace
   sed -i -e '1h;2,$H;$!d;g' -e 's~ports\:\n    - ~type\: NodePort\n  ports\:\n    - nodePort\: 32767\n      ~' kubernetes-dashboard.yaml
   kubectl create -f kubernetes-dashboard.yaml
-  
+
   log "Enable default admin access to the kubernetes dashboard"
   # per https://github.com/kubernetes/dashboard/wiki/Access-control#admin-privileges
   cat <<EOF >dashboard-admin.yaml
@@ -284,7 +306,7 @@ function setup_k8s_workers() {
   export k8s_joincmd=$(grep "kubeadm join" ~/tmp/kubeadm.out)
   log "Installing workers at $1 with joincmd: $k8s_joincmd"
 
-# TODO: kubeadm reset below is workaround for 
+# TODO: kubeadm reset below is workaround for
 # Ubuntu: "[preflight] Some fatal errors occurred: /var/lib/kubelet is not empty"
 # per https://github.com/kubernetes/kubeadm/issues/1
 # Centos: "Failed to start ContainerManager failed to initialize top
@@ -345,7 +367,7 @@ EOF
 }
 
 dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
-hostip=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+hostip=$(/sbin/ip route get 8.8.8.8 | head -1 | sed 's/^.*src //' | awk '{print $1}')
 
 setup_k8s_master
 

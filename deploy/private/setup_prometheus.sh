@@ -27,7 +27,8 @@
 #. - Helm installed, e.g. via setup_helm.sh
 #.
 #. Usage:
-#. $ bash setup_prometheus.sh
+#. $ bash setup_prometheus.sh [clean]
+#.   clean: remove Prometheus and Grafana
 #.
 
 # Prometheus links
@@ -54,7 +55,6 @@ function log() {
 
 function setup_prereqs() {
 	log "Setup prerequisites"
-  dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}')
   if [[ "$dist" == "ubuntu" ]]; then
     sudo apt-get install -y golang-go jq
   else
@@ -76,26 +76,24 @@ function setup_prometheus() {
     --set server.service.nodePort=30990 \
     --set server.service.type=NodePort \
     --set server.persistentVolume.enabled=false
-  
-  host_ip=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
-  while ! curl -o ~/tmp/up http://$host_ip:30990/api/v1/query?query=up ; do
+
+  while ! curl -o /tmp/up http://$host_ip:30990/api/v1/query?query=up ; do
     log "Prometheus API is not yet responding... waiting 10 seconds"
     sleep 10
   done
 
-  exp=$(jq '.data.result|length' ~/tmp/up)
+  exp=$(jq '.data.result|length' /tmp/up)
   log "$exp exporters are up"
   while [[ $exp -gt 0 ]]; do
     ((exp--))
-    eip=$(jq -r ".data.result[$exp].metric.instance" ~/tmp/up)
-    job=$(jq -r ".data.result[$exp].metric.job" ~/tmp/up)
+    eip=$(jq -r ".data.result[$exp].metric.instance" /tmp/up)
+    job=$(jq -r ".data.result[$exp].metric.job" /tmp/up)
     log "$job at $eip"
   done
 }
 
 function setup_grafana() {
   trap 'fail' ERR
-  host_ip=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
 
   # TODO: use randomly generated password
   # TODO: add persistent volume support
@@ -121,11 +119,11 @@ function setup_grafana() {
 "url":"http://$host_ip:30990/", "basicAuth":false,"isDefault":true, \
 "user":"", "password":"" }
 EOF
-  curl -X POST -o ~/tmp/json -u admin:admin -H "Accept: application/json" \
+  curl -X POST -o /tmp/json -u admin:admin -H "Accept: application/json" \
     -H "Content-type: application/json" \
     -d @datasources.json http://$grafana/api/datasources
 
-  if [[ "$(jq -r '.message' ~/tmp/json)" != "Datasource added" ]]; then
+  if [[ "$(jq -r '.message' /tmp/json)" != "Datasource added" ]]; then
     fail "Datasource creation failed"
   fi
   log "Prometheus datasource for Grafana added"
@@ -145,11 +143,42 @@ EOF
   done
 }
 
+function wait_until_notfound() {
+  cmd="$1"
+  what="$2"
+  log "Waiting until $what is missing from output of \"$cmd\""
+  result=$($cmd)
+  while [[ $(echo $result | grep -c "$what") -gt 0 ]]; do
+    log "Waiting 10 seconds"
+    sleep 10
+    result=$($cmd)
+  done
+}
+
+function clean() {
+  log "Removing Grafana"
+  helm delete --purge gf
+  wait_until_notfound "kubectl get pods -n default" grafana
+
+  log "Removing Prometheus"
+  helm delete --purge pm
+  wait_until_notfound "kubectl get pods -n default" prometheus
+}
+
 export WORK_DIR=$(pwd)
-setup_prereqs
-setup_prometheus
-setup_grafana
+dist=$(grep -m 1 'ID=' /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
+distver=$(grep -m 1 'VERSION_ID=' /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
+host_ip=$(/sbin/ip route get 8.8.8.8 | head -1 | sed 's/^.*src //' | awk '{print $1}')
+
+if [[ "$1" == "clean" ]]; then
+  clean
+  log "Cleanup is complete. You can now redeploy Prometheus+Grafana."
+else
+  setup_prereqs
+  setup_prometheus
+  setup_grafana
+  log "Prometheus dashboard is available at http://$host_ip:30990"
+  log "Grafana dashboards are available at http://$host_ip:30330 (login as admin/admin)"
+  log "Grafana API is available at http://admin:admin@$host_ip:30330/api/v1/query?query=<string>"
+fi
 cd $WORK_DIR
-log "Prometheus dashboard is available at http://$host_ip:30990"
-log "Grafana dashboards are available at http://$host_ip:30330 (login as admin/admin)"
-log "Grafana API is available at http://admin:admin@$host_ip:30330/api/v1/query?query=<string>"
