@@ -30,6 +30,11 @@
 #.   user: username on the Acumos platform
 #.   pass: password on the Acumos platform
 #.   datasource: (optional) file path or URL of data source for databroker
+#.
+#. - To stop the solution and redeploy, run these commands before deploy.sh
+#.     kubectl delete -f solution.yaml
+#.     watch kubectl get pods -n acumos
+#.   When you see "No resources found." you can re-run deploy.sh
 
 trap 'fail' ERR
 
@@ -193,9 +198,13 @@ function deploy_solution() {
       http://127.0.0.1:30556/configDB -d @databroker.json
   fi
 
-  log "monitor the status of all other services and deployments, and when they are running"
   log "Wait for all pods to be Running"
   pods=$(kubectl get pods --namespace acumos | awk '/-/ {print $1}')
+  while [[ "$pods" == "No resources found." ]]; do
+    log "pods are not yet created, waiting 10 seconds"
+    pods=$(kubectl get pods --namespace acumos | awk '/-/ {print $1}')
+  done
+
   for pod in $pods; do
     status=$(kubectl get pods -n acumos | awk "/$pod/ {print \$3}")
     while [[ "$status" != "Running" ]]; do
