@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9c6115dd_c96d4c61",
+        "filename": "deploy/private/setup_k8s.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 271
+      },
+      "writtenOn": "2018-12-06T14:05:34Z",
+      "side": 1,
+      "message": "Bryan, since the default version for docker-ce has moved forward to v18.something, which is not validated for k8s v1.10, suggesting specifying version:  docker-ce\u003d17.06.0~ce-0~ubuntu",
+      "range": {
+        "startLine": 90,
+        "startChar": 32,
+        "endLine": 90,
+        "endChar": 41
+      },
+      "revId": "b7efc0326f5461fcb38e576a77601aa2588755ce",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
