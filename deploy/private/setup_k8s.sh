@@ -20,7 +20,8 @@
 #. What this is: script to setup a kubernetes cluster with calico as cni
 #. 
 #. Prerequisites:
-#. - One or more Ubuntu Xenial or Centos 7 servers (as target k8s cluster nodes)
+#. - One or more Ubuntu Xenial (16.04) / Bionic (18.04) or Centos 7 servers
+#    (as target k8s cluster nodes)
 #. - This script downloaded to a folder on the server to be the k8s master node
 #. - key-based SSH setup between the k8s master node and other nodes
 #. - 192.168.0.0/16 should not be used on your server network interface subnets
@@ -53,11 +54,12 @@ function wait_dpkg() {
     sleep 1
   done
 }
-dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
+dist=$(grep -m 1 'ID=' /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
+distver=$(grep -m 1 'VERSION_ID=' /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 if [[ $(grep -c $HOSTNAME /etc/hosts) -eq 0 ]]; then
   echo; echo "prereqs.sh: ($(date)) Add $HOSTNAME to /etc/hosts"
   # have to add "/sbin" to path of IP command for centos
-  echo "$(/sbin/ip route get 8.8.8.8 | awk '{print $NF; exit}') $HOSTNAME" \
+  echo "$(/sbin/ip route get 8.8.8.8 | head -1 | sed 's/^.*src //' | awk '{print $1}') $HOSTNAME" \
     | sudo tee -a /etc/hosts
 fi
 if [[ "$dist" == "ubuntu" ]]; then
@@ -67,23 +69,40 @@ if [[ "$dist" == "ubuntu" ]]; then
   wait_dpkg; sudo apt-get update
   wait_dpkg; sudo apt-get upgrade -y
 
-  dce=$(dpkg -l | grep -c docker-ce)
-  if [[ $dce -eq 0 ]]; then
-    echo; echo "prereqs.sh: ($(date)) Install latest docker-ce"
-    # Per https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/
-    sudo apt-get remove -y docker docker-engine docker.io docker-ce
-    sudo apt-get update
-    sudo apt-get install -y \
-      apt-transport-https \
-      ca-certificates \
-      curl \
-      software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] \
-      https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt-get update
-    sudo apt-get install -y docker-ce
-  fi
+  case "$distver" in
+    "16.04")
+      log "Install docker-ce if needed"
+      dce=$(/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' 'docker-ce')
+      if [[ $dce != "installed" ]]; then
+        echo; echo "prereqs.sh: ($(date)) Install latest docker-ce"
+        # Per https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/
+        sudo apt-get purge -y docker docker-engine docker.io
+        sudo apt-get update
+        sudo apt-get install -y \
+          apt-transport-https \
+          ca-certificates \
+          curl \
+          software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] \
+          https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        sudo apt-get update
+        sudo apt-get install -y docker-ce
+      fi
+      ;;
+    "18.04")
+      log "Install docker.io if needed"
+      dio=$(/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' 'docker.io')
+      if [[ $dio != "installed" ]]; then
+        sudo apt-get purge -y docker docker-engine docker-ce docker-ce-cli
+        sudo apt-get update
+        sudo apt-get install -y docker.io=17.12.1-0ubuntu1
+        sudo systemctl enable docker.service
+      fi
+      ;;
+    *)
+      fail "Unsupported Ubuntu version ($distver)"
+  esac
 
   echo; echo "prereqs.sh: ($(date)) Get k8s packages"
   export KUBE_VERSION=1.10.0
@@ -177,7 +196,7 @@ function setup_k8s_master() {
   # --pod-network-cidr=192.168.0.0/16 is required for calico; this should not 
   # conflict with your server network interface subnets
   log "Reset kubeadm in case pre-existing cluster"
-  sudo kubeadm reset -f
+  sudo kubeadm reset
   # Start cluster
   log "Workaround issue '/etc/kubernetes/manifests is not empty'"
 	mkdir ~/tmp
@@ -345,7 +364,7 @@ EOF
 }
 
 dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
-hostip=$(ip route get 8.8.8.8 | awk '{print $NF; exit}')
+hostip=$(/sbin/ip route get 8.8.8.8 | head -1 | sed 's/^.*src //' | awk '{print $1}')
 
 setup_k8s_master
 

@@ -52,13 +52,9 @@ function log() {
 
 function setup_prereqs() {
   if [[ "$dist" == "ubuntu" ]]; then
-    if [[ "$(dpkg -l | grep -e 'jq' -e 'golang-go' -e 'unzip')" == "" ]]; then
-      sudo apt install -y jq golang-go unzip
-    fi
+    sudo apt install -y jq golang-go unzip
   else
-    if [[ "$(rpm -qa | grep -e 'jq' -e 'golang-go' -e 'unzip')" == "" ]]; then
-      sudo yum install -y jq golang-go unzip
-    fi
+    sudo yum install -y jq golang-go unzip
   fi
 
   if [[ "$(ls ~/protoc/bin/protoc)" == "" ]]; then
