@@ -31,7 +31,8 @@
 #. $ cd kubernetes-client/deploy/private
 #. $ bash setup_k8s.sh "[nodes]"
 #.   nodes: quoted, space-separated list of k8s worker nodes. If no nodes are
-#.          specified a single all-in-one (AIO) cluster will be installed.
+#.          specified a single all-in-one (AIO) cluster will be installed. To
+#.          ad more nodes later, just re-run the command with the node names.
 #.
 
 set -x
@@ -49,6 +50,7 @@ function setup_prereqs() {
   cat <<'EOG' >~/prereqs.sh
 #!/bin/bash
 set -x
+trap 'exit 1' ERR
 # Basic server pre-reqs
 function wait_dpkg() {
   # TODO: workaround for "E: Could not get lock /var/lib/dpkg/lock - open (11: Resource temporarily unavailable)"
@@ -70,16 +72,22 @@ if [[ "$dist" == "ubuntu" ]]; then
   echo; echo "prereqs.sh: ($(date)) Basic prerequisites"
 
   wait_dpkg; sudo apt-get update
-  wait_dpkg; sudo apt-get upgrade -y
+  # TODO: fix need to skip upgrade as this sometimes updates the kube-system
+  # services and they then stay in "pending", blocking k8s-based deployment
+  # Also on bionic can cause a hang at 'Preparing to unpack .../00-systemd-sysv_237-3ubuntu10.11_amd64.deb ...'
+  #  wait_dpkg; sudo apt-get upgrade -y
 
   case "$distver" in
     "16.04")
-      log "Install docker-ce if needed"
-      dce=$(/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' 'docker-ce')
-      if [[ $dce != "installed" ]]; then
+      echo; echo "prereqs.sh: ($(date)) Install docker-ce if needed"
+      if [[ $(/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' 'docker-ce') != "installed" \
+         || $(/usr/bin/dpkg-query --show 'docker-ce' | grep -c '17\.03') -eq 0 ]]; then
         echo; echo "prereqs.sh: ($(date)) Install latest docker-ce"
         # Per https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/
-        sudo apt-get purge -y docker-ce docker docker-engine docker.io
+        wait_dpkg
+        if [[ $(sudo apt-get purge -y kubectl kubelet kubeadm kubernetes-cni) ]]; then
+          echo "Purged docker-ce docker docker-engine docker.io"
+        fi
         sudo apt-get update
         sudo apt-get install -y \
           apt-transport-https \
@@ -94,11 +102,13 @@ if [[ "$dist" == "ubuntu" ]]; then
       fi
       ;;
     "18.04")
-      log "Install docker.io if needed"
-      sudo apt-get purge -y docker docker-engine docker-ce docker-ce-cli
-      sudo apt-get update
-      dio=$(/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' 'docker.io')
-      if [[ $dio != "installed" ]]; then
+      echo; echo "prereqs.sh: ($(date)) Install docker.io if needed"
+      if [[ $(/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' 'docker.io') != "installed" || \
+        $(/usr/bin/dpkg-query --show 'docker.io' | grep -c '17\.12') -eq 0 ]]; then
+        if [[ $(sudo apt-get purge -y docker docker-engine docker-ce) ]]; then
+          echo "Purged docker-ce docker docker-engine docker.io"
+        fi
+        sudo apt-get update
         sudo apt-get install -y docker.io=17.12.1-0ubuntu1
         sudo systemctl enable docker.service
       fi
@@ -111,6 +121,15 @@ if [[ "$dist" == "ubuntu" ]]; then
   export KUBE_VERSION=1.10.0
   # per https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
   # Install kubelet, kubeadm, kubectl per https://kubernetes.io/docs/setup/independent/install-kubeadm/
+  if [[ $(sudo apt-get purge -y kubectl kubelet kubeadm kubernetes-cni) ]]; then
+    echo "Purged kubectl kubelet kubeadm kubernetes-cni"
+  fi
+  # workaround for [preflight] Some fatal errors occurred:
+  #                /etc/kubernetes/manifests is not empty
+  sudo rm -rf /etc/kubernetes/manifests/*
+  echo; echo "prereqs.sh: ($(date)) Disable swap to workaround k8s incompatibility with swap"
+  # per https://github.com/kubernetes/kubeadm/issues/610
+  sudo swapoff -a
   sudo apt-get update && sudo apt-get install -y apt-transport-https
   curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
   cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
@@ -163,6 +182,14 @@ else
 #  sudo yum install -y docker-ce-17.09.0.ce-1.el7.centos.x86_64.rpm
 #  sudo systemctl start docker
   echo; echo "prereqs.sh: ($(date)) Install kubectl, kubelet, kubeadm"
+  sudo yum remove -y kubectl kubelet kubeadm
+  echo; echo "prereqs.sh: ($(date)) Workaround issue '/etc/kubernetes/manifests is not empty'"
+  # workaround for [preflight] Some fatal errors occurred:
+  #                /etc/kubernetes/manifests is not empty
+  sudo rm -rf /etc/kubernetes/manifests/*
+  echo; echo "prereqs.sh: ($(date)) Disable swap to workaround k8s incompatibility with swap"
+  # per https://github.com/kubernetes/kubeadm/issues/610
+  sudo swapoff -a
   cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
@@ -173,6 +200,8 @@ repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOF
   sudo setenforce 0
+  sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' \
+    /etc/sysconfig/selinux
   sudo yum install -y kubelet kubeadm kubectl
   sudo systemctl enable kubelet
   sudo systemctl start kubelet
@@ -189,9 +218,8 @@ EOG
 }
 
 function setup_k8s_master() {
+  trap 'fail' ERR
   log "Setting up kubernetes master"
-  setup_prereqs
-
   # Install master
   bash ~/prereqs.sh master
   # per https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
@@ -210,10 +238,12 @@ function setup_k8s_master() {
   # per https://github.com/kubernetes/kubeadm/issues/610
   sudo swapoff -a
   log "Start the cluster"
-  sudo kubeadm init --pod-network-cidr=192.168.0.0/16 >>~/tmp/kubeadm.out
-  cat ~/tmp/kubeadm.out
-  export k8s_joincmd=$(grep "kubeadm join" ~/tmp/kubeadm.out)
+  sudo kubeadm init --pod-network-cidr=192.168.0.0/16 >>/tmp/kubeadm.out
+  cat /tmp/kubeadm.out
+  export k8s_joincmd=$(grep "kubeadm join" /tmp/kubeadm.out)
+  echo $k8s_joincmd >~/k8s_joincmd
   log "Cluster join command for manual use if needed: $k8s_joincmd"
+  log "Also saved in file ~/k8s_joincmd"
   mkdir -p $HOME/.kube
   sudo cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -302,8 +332,9 @@ EOF
 }
 
 function setup_k8s_workers() {
+  trap 'fail' ERR
   workers="$1"
-  export k8s_joincmd=$(grep "kubeadm join" ~/tmp/kubeadm.out)
+  k8s_joincmd=$(sudo kubeadm token create --print-join-command )
   log "Installing workers at $1 with joincmd: $k8s_joincmd"
 
 # TODO: kubeadm reset below is workaround for
@@ -312,7 +343,8 @@ function setup_k8s_workers() {
 # Centos: "Failed to start ContainerManager failed to initialize top
 # level QOS containers: root container /kubepods doesn't exist"
   tee start_worker.sh <<EOF
-sudo kubeadm reset -f
+set -x
+sudo kubeadm reset
 sudo $k8s_joincmd
 EOF
 
@@ -320,6 +352,19 @@ EOF
 # sometimes calico seems to be incompletely setup at some workers. symptoms
 # similar to as noted for the "wait for calico" steps above.
   for worker in $workers; do
+    log "Delete node $worker if it exists"
+    if [[ $(kubectl get nodes | grep -c $worker) -gt 0 ]]; then
+      kubectl delete node $worker
+      while [[ $(kubectl get nodes | grep -c $worker) -gt 0 ]]; do
+        log "Waiting for node $worker to be deleted"
+        sleep 10
+      done
+    fi
+    while ! ssh -x -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+      $USER@$worker hostname ; do
+      log "$worker is not ready for SSH, waiting 10 seconds"
+      sleep 10
+    done
     host=$(ssh -x -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $USER@$worker hostname)
     log "Install worker at $worker hostname $host"
     if ! scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
@@ -369,10 +414,14 @@ EOF
 dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 hostip=$(/sbin/ip route get 8.8.8.8 | head -1 | sed 's/^.*src //' | awk '{print $1}')
 
-setup_k8s_master
+setup_prereqs
 
-if [[ ! -z "$2" ]]; then
-  setup_k8s_workers "$2"
+if [[ ! $(kubectl get namespaces) ]]; then
+  setup_k8s_master
+fi
+
+if [[ ! -z "$1" ]]; then
+  setup_k8s_workers "$1"
 fi
 
 log "Setup is complete."
