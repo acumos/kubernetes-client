@@ -108,7 +108,7 @@ function setup_grafana() {
   grafana=$host_ip:30330
 
   log "Setup Grafana datasources and dashboards"
-  while ! curl -u admin:admin http://@$grafana/api/org ; do
+  while ! curl -u admin:admin http://$grafana/api/org ; do
     log "Grafana API is not yet responding... waiting 10 seconds"
     sleep 10
   done
