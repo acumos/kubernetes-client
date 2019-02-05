@@ -144,7 +144,7 @@ curl $APISERVER/api --header "Authorization: Bearer $TOKEN" --insecure
 kubectl config set-cluster $server --server=$APISERVER \
   --insecure-skip-tls-verify=true
 kubectl config set-context $server-$namespace --cluster=$server \
-  --user=$user --namespace=$namespace]
+  --user=$user --namespace=$namespace
 kubectl config set-credentials $user --token=$TOKEN
 kubectl config use-context $server-$namespace
 

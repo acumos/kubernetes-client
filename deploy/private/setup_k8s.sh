@@ -90,7 +90,7 @@ if [[ "$dist" == "ubuntu" ]]; then
         echo; echo "prereqs.sh: ($(date)) Install latest docker-ce"
         # Per https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/
         wait_dpkg
-        if [[ $(sudo apt-get purge -y kubectl kubelet kubeadm kubernetes-cni) ]]; then
+        if [[ $(sudo apt-get purge -y docker-ce docker docker-engine docker.io) ]]; then
           echo "Purged docker-ce docker docker-engine docker.io"
         fi
         sudo apt-get update
@@ -109,7 +109,7 @@ if [[ "$dist" == "ubuntu" ]]; then
       echo; echo "prereqs.sh: ($(date)) Install docker.io if needed"
       if [[ $(/usr/bin/dpkg-query --show --showformat='${db:Status-Status}\n' 'docker.io') != "installed" || \
         $(/usr/bin/dpkg-query --show 'docker.io' | grep -c '17\.12') -eq 0 ]]; then
-        if [[ $(sudo apt-get purge -y docker docker-engine docker-ce) ]]; then
+        if [[ $(sudo apt-get purge -y docker docker-engine docker-ce docker.io) ]]; then
           echo "Purged docker-ce docker docker-engine docker.io"
         fi
         sudo apt-get update
