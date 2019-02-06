@@ -1,0 +1,317 @@
+{
+  "name": "csvdbTest",
+  "version": "1.0.0",
+  "input_ports": [
+    {
+      "container_name": "CSVDataBroker",
+      "operation_signature": {
+        "operation_name": "pullData"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "container_name": "CSVDataBroker",
+      "node_type": "DataBroker",
+      "image": "nexus3.acumos.org:10004/databroker-zipbroker:0.0.1",
+      "proto_uri": "com/artifact/cpm2/1/cpm2-1.proto",
+      "operation_signature_list": [
+        {
+          "operation_signature": {
+            "operation_name": "pullData",
+            "input_message_name": "RequestMessage",
+            "output_message_name": "ANY"
+          },
+          "connected_to": [
+            {
+              "container_name": "CPM21",
+              "operation_signature": {
+                "operation_name": "transform"
+              }
+            }
+          ]
+        }
+      ],
+      "data_broker_map": {
+        "script": "test",
+        "target_system_url": "file://test-url",
+        "local_system_data_file_path": "book2.csv",
+        "first_row": "contains_field_names",
+        "csv_file_field_separator": ",",
+        "data_broker_type": "csv",
+        "map_inputs": [
+          {
+            "input_field": {
+              "name": "date",
+              "type": "int",
+              "checked": "YES",
+              "mapped_to_field": "1.2"
+            }
+          },
+          {
+            "input_field": {
+              "name": "cpu",
+              "type": "string",
+              "checked": "YES",
+              "mapped_to_field": "1.1"
+            }
+          },
+          {
+            "input_field": {
+              "name": "Memory",
+              "type": "float",
+              "checked": "YES",
+              "mapped_to_field": "1.3.1"
+            }
+          },
+          {
+            "input_field": {
+              "name": "Network",
+              "type": "string",
+              "checked": "YES",
+              "mapped_to_field": "1.4"
+            }
+          },
+          {
+            "input_field": {
+              "name": "Disk",
+              "type": "float",
+              "checked": "YES",
+              "mapped_to_field": "1.3.2"
+            }
+          },
+          {
+            "input_field": {
+              "name": "NumUsers",
+              "type": "int",
+              "checked": "YES",
+              "mapped_to_field": "2.1"
+            }
+          },
+          {
+            "input_field": {
+              "name": "Noconnections",
+              "type": "int",
+              "checked": "YES",
+              "mapped_to_field": "2.2"
+            }
+          },
+          {
+            "input_field": {
+              "name": "Result",
+              "type": "null",
+              "checked": "NO",
+              "mapped_to_field": "null"
+            }
+          },
+          {
+            "input_field": {
+              "name": "Link1",
+              "type": "null",
+              "checked": "NO",
+              "mapped_to_field": "null"
+            }
+          },
+          {
+            "input_field": {
+              "name": "Link2",
+              "type": "null",
+              "checked": "NO",
+              "mapped_to_field": "null"
+            }
+          },
+          {
+            "input_field": {
+              "name": "Link3",
+              "type": "null",
+              "checked": "NO",
+              "mapped_to_field": "null"
+            }
+          },
+          {
+            "input_field": {
+              "name": "id",
+              "type": "null",
+              "checked": "NO",
+              "mapped_to_field": "null"
+            }
+          }
+        ],
+        "map_outputs": [
+          {
+           "output_field": {
+              "tag": "1.1",
+              "name": "sepal_len",
+              "type_and_role_hierarchy_list": [
+                {
+                  "name": "string",
+                  "role": ""
+                },
+                {
+                  "name": "DataFrameRow",
+                  "role": "repeated"
+                },
+                {
+                  "name": "DataFrame234",
+                  "role": "null"
+                }
+              ]
+            }
+          },
+          {
+            "output_field": {
+              "tag": "1.2",
+              "name": "sepal_wid",
+              "type_and_role_hierarchy_list": [
+                {
+                  "name": "int32",
+                  "role": ""
+                },
+                {
+                  "name": "DataFrameRow",
+                  "role": "repeated"
+                },
+                {
+                  "name": "DataFrame234",
+                  "role": "null"
+                }
+              ]
+            }
+          },
+          {
+            "output_field": {
+              "tag": "1.3.1",
+              "name": "row_1",
+              "type_and_role_hierarchy_list": [
+                {
+                  "name": "string",
+                  "role": "repeated"
+                },
+                {
+                  "name": "XYZ",
+                  "role": ""
+                },
+                {
+                  "name": "DataFrameRow",
+                  "role": "repeated"
+                },
+                {
+                  "name": "DataFrame234",
+                  "role": "null"
+                }
+              ]
+            }
+          },
+          {
+            "output_field": {
+              "tag": "1.3.2",
+              "name": "row_2",
+              "type_and_role_hierarchy_list": [
+                {
+                  "name": "string",
+                  "role": "repeated"
+                },
+                {
+                  "name": "XYZ",
+                  "role": ""
+                },
+                {
+                  "name": "DataFrameRow",
+                  "role": "repeated"
+                },
+                {
+                  "name": "DataFrame234",
+                  "role": "null"
+                }
+              ]
+            }
+          },
+          {
+            "output_field": {
+              "tag": "1.4",
+              "name": "petal_wid",
+              "type_and_role_hierarchy_list": [
+                {
+                  "name": "string",
+                  "role": ""
+                },
+                {
+                  "name": "DataFrameRow",
+                  "role": "repeated"
+                },
+                {
+                  "name": "DataFrame234",
+                  "role": "null"
+                }
+              ]
+            }
+          },
+          {
+            "output_field": {
+              "tag": "2.1",
+              "name": "row_1",
+              "type_and_role_hierarchy_list": [
+                {
+                  "name": "int64",
+                  "role": "repeated"
+                },
+                {
+                  "name": "MyFrameRow",
+                  "role": "repeated"
+                },
+                {
+                  "name": "DataFrame234",
+                  "role": "null"
+                }
+              ]
+            }
+          },
+          {
+            "output_field": {
+              "tag": "2.2",
+              "name": "row_2",
+              "type_and_role_hierarchy_list": [
+                {
+                  "name": "string",
+                  "role": "repeated"
+                },
+                {
+                  "name": "MyFrameRow",
+                  "role": "repeated"
+                },
+                {
+                  "name": "DataFrame234",
+                  "role": "null"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "data_sources": null
+    },
+    {
+      "container_name": "CPM21",
+      "node_type": "MLModel",
+      "image": "cognita-nexus01:8001/cpm2:1",
+      "proto_uri": "com/artifact/cpm2/1/cpm2-1.proto",
+      "operation_signature_list": [
+        {
+          "operation_signature": {
+            "operation_name": "transform",
+            "input_message_name": "DataFrame234",
+            "output_message_name": "Prediction"
+          },
+          "connected_to": []
+        }
+      ],
+      "data_broker_map": null,
+      "data_sources": null
+    }
+  ],
+  "probeIndicator": [
+    {
+      "value": "false"
+    }
+  ]
+}
