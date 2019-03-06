@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
@@ -35,6 +36,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dockerKube.beans.DeploymentBean;
+import com.dockerKube.logging.ONAPLogConstants;
+import com.dockerKube.logging.ONAPLogDetails;
 import com.dockerKube.service.KubeService;
 import com.dockerKube.utils.DockerKubeConstants;
 
@@ -91,7 +94,8 @@ public class KubeController {
 		 String probeSchemaPort=(env.getProperty(DockerKubeConstants.PROBE_SCHEMA_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_SCHEMA_PORT) : "";
 		 String nginxImageName=(env.getProperty(DockerKubeConstants.NGINX_IMAGE_NAME) != null) ? env.getProperty(DockerKubeConstants.NGINX_IMAGE_NAME) : "";
 		 String nexusEndPointURL=(env.getProperty(DockerKubeConstants.NEXUS_END_POINTURL) != null) ? env.getProperty(DockerKubeConstants.NEXUS_END_POINTURL) : "";
-		 
+		 String userDetail=MDC.get(ONAPLogConstants.MDCs.USER); 
+		 String requestId=MDC.get(ONAPLogConstants.MDCs.REQUEST_ID);
 		 
 	   	 dBean.setSolutionId(solutionId);
     	 dBean.setSolutionRevisionId(revisionId);
@@ -129,6 +133,8 @@ public class KubeController {
     	 dBean.setNginxImageName(nginxImageName);
     	 dBean.setNexusEndPointURL(nexusEndPointURL);
     	 
+    	 log.debug("userDetail "+userDetail);
+    	 log.debug("requestId "+requestId);
     	 log.debug("probeExternalPort "+probeExternalPort);
     	 log.debug("probeSchemaPort "+probeSchemaPort);
     	 log.debug("nginxImageName "+nginxImageName);
@@ -178,11 +184,14 @@ public class KubeController {
 	   	  }
 	   	response.setStatus(200);
 	   	}catch(Exception e){
+	   	 MDC.put("ClassName", "KubeController");
 			log.error("getSolutionZip failed", e);
+			 MDC.remove("ClassName");
 			response.setStatus(404);
 		}
 	    response.setHeader("Content-Disposition", "attachment; filename=solution.zip");
 	    response.getOutputStream().write(solutionZip);
+	    ONAPLogDetails.clearMDCDetails();
 	   	log.debug("End getSolutionZip");
 	}
  }
