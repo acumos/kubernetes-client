@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "9f7e688a_3b7abd9e",
+        "filename": "src/main/java/com/dockerKube/controller/KubeController.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 191
+      },
+      "writtenOn": "2019-03-26T13:21:53Z",
+      "side": 1,
+      "message": "Here\u0027s the right way to fetch a logger:\n    \tprivate static final Logger logger \u003d LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());\n\n\nPlease use this everywhere",
+      "range": {
+        "startLine": 52,
+        "startChar": 1,
+        "endLine": 52,
+        "endChar": 60
+      },
+      "revId": "a5dc2d0d20d254f9e464737200c091ae4e5f56e0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8f3b5dda_103e15c3",
         "filename": "src/main/resources/logback.xml",
         "patchSetId": 1
