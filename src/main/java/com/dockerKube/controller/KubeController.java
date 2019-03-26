@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dockerKube.beans.DeploymentBean;
+import com.dockerKube.logging.LogConfig;
 import com.dockerKube.service.KubeService;
 import com.dockerKube.utils.DockerKubeConstants;
 
@@ -52,7 +53,8 @@ public class KubeController {
 	
 	
 	@RequestMapping(value = "/getSolutionZip/{solutionId}/{revisionId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-	public void getSolutionZip(@PathVariable("solutionId") String solutionId, @PathVariable("revisionId") String revisionId,HttpServletResponse response) throws IOException {
+	public void getSolutionZip(@PathVariable("solutionId") String solutionId, @PathVariable("revisionId") String revisionId,HttpServletResponse response) throws Exception {
+		 LogConfig.setEnteringMDCs("kubernetes-client","getSolutionZip");
 		 log.debug("Start getSolutionZip solutionId"+solutionId+" revisionId "+revisionId);
 		 DeploymentBean dBean=new DeploymentBean();
 		 byte[] solutionZip=null;
@@ -180,7 +182,9 @@ public class KubeController {
 	   	}catch(Exception e){
 			log.error("getSolutionZip failed", e);
 			response.setStatus(404);
+			LogConfig.clearMDCDetails();
 		}
+	   	
 	    response.setHeader("Content-Disposition", "attachment; filename=solution.zip");
 	    response.getOutputStream().write(solutionZip);
 	   	log.debug("End getSolutionZip");
