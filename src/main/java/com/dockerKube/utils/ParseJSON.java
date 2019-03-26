@@ -22,6 +22,7 @@ package com.dockerKube.utils;
 
 
 import java.io.StringReader;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,7 +58,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ParseJSON {
 	
-	Logger log =LoggerFactory.getLogger(ParseJSON.class);
+	private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 	/** getDataBrokerContainer method is used to get Databroker details
 	 * @param jsonString
 	 *             - json string for parse

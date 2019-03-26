@@ -22,6 +22,7 @@ package com.dockerKube.serviceImpl;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -66,7 +67,7 @@ import org.acumos.cds.domain.MLPCodeNamePair;
 @Service
 public class KubeServiceImpl implements KubeService  {
 	
-	Logger logger = LoggerFactory.getLogger(KubeController.class);
+	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 	/**
 	    * getClient is used geeting connection from database
 	    * @param datasource 

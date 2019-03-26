@@ -4,6 +4,7 @@ package com.dockerKube.test.serviceImpl;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 
 
@@ -20,7 +21,7 @@ import com.dockerKube.utils.CommonUtil;
 
 public class KubeServiceImplTest {
 
-	private static Logger logger = LoggerFactory.getLogger(KubeServiceImplTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 	@Test	
 	public void getSolutionYMLFileTest() throws Exception{
 		logger.info("getSolutionYMLFileTest Start");

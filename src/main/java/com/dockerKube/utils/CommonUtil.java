@@ -21,6 +21,7 @@ package com.dockerKube.utils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,8 +30,10 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+
 public class CommonUtil {
-	Logger logger = LoggerFactory.getLogger(CommonUtil.class);
+	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 	/** geContainerName method is used to get containerName
 	 * @param imageName
 	 *            - image name
@@ -120,5 +123,7 @@ public class CommonUtil {
 		logger.debug(" iterateImageMap End ");
 		return list;
 	}
+	
+	
 
 }
