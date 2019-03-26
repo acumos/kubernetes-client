@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8f3b5dda_103e15c3",
+        "filename": "src/main/resources/logback.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 191
+      },
+      "writtenOn": "2019-03-26T13:18:39Z",
+      "side": 1,
+      "message": "Please change this platform-oam with directory name of your project.. in this case deployment",
+      "range": {
+        "startLine": 16,
+        "startChar": 1,
+        "endLine": 16,
+        "endChar": 59
+      },
+      "revId": "a5dc2d0d20d254f9e464737200c091ae4e5f56e0",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
