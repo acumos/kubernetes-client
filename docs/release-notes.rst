@@ -24,6 +24,13 @@ Kubernetes Client Release Notes
 Kubernetes-Client Component
 ...........................
 ---------------------------------
+Version 2.0.12, 28 March 2019
+---------------------------------
+* Logging Standardization (`ACUMOS-2330 <https://jira.acumos.org/browse/ACUMOS-2330>`_)
+* Increase Sonar coverage to at least 40% (`ACUMOS-2367 <https://jira.acumos.org/browse/ACUMOS-2367>`_)
+* update CDS 2.1.2 for kubernetes-client (`ACUMOS-2669 <https://jira.acumos.org/browse/ACUMOS-2669>`_)
+
+---------------------------------
 Version 2.0.4, 1 March 2019
 ---------------------------------
 * update CDS 2.1.1 for Kubernetes-client (`ACUMOS-2589 <https://jira.acumos.org/browse/ACUMOS-2589>`_)
