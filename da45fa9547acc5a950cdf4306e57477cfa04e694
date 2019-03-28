@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5ab388bd_69b775ca",
+        "filename": "pom.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 191
+      },
+      "writtenOn": "2019-03-28T14:12:12Z",
+      "side": 1,
+      "message": "you have mention version 2.0.12 in release notes but here it is 2.0.7. It doesn\u0027t match.",
+      "range": {
+        "startLine": 8,
+        "startChar": 1,
+        "endLine": 8,
+        "endChar": 34
+      },
+      "revId": "da45fa9547acc5a950cdf4306e57477cfa04e694",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
