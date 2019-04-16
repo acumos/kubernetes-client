@@ -19,7 +19,7 @@
 #
 #. What this is: Deployment script for Acumos solutions under private kubernetes
 #. clusters.
-#. 
+#.
 #. Prerequisites:
 #. - Ubuntu Xenial or Centos 7 server
 #. - Via the Acumos platform, download a solution.zip deployment package for
@@ -51,40 +51,20 @@ function log() {
 
 function docker_login() {
   trap 'fail' ERR
-  while ! sudo docker login $1 -u $2 -p $3 ; do
+  while ! docker login $1 -u $2 -p $3 ; do
+    sleep 10
     log "Docker login failed at $1, trying again"
   done
 }
 
 function prepare_docker() {
   trap 'fail' ERR
-  log "retrieve the hostname:port of the Acumos platform docker proxy from the solution.yaml, using the 'image' attribute of any model microservice"
-  dockerProxy=$(grep 'image.*\/' solution.yaml | grep -ve acumos.org | head -1 | sed 's/        image: //' | cut -d '/' -f 1)
-
-  if [[ $(sudo grep -c $dockerProxy /etc/docker/daemon.json) -eq 0 ]]; then
-    log "configure the docker service to allow access to the Acumos platform docker proxy as an insecure registry."
-    cat << EOF | sudo tee /etc/docker/daemon.json
-{
-  "insecure-registries": [
-    "$dockerProxy"
-  ],
-  "disable-legacy-registry": true
-}
-EOF
-    sudo systemctl daemon-reload
-    sudo service docker restart
-  fi
-
   log "login to the Acumos platform docker proxy using the Acumos platform username and password provided by the user"
   docker_login https://$dockerProxy $username $password
   log "Log into LF Nexus Docker repos"
   docker_login https://nexus3.acumos.org:10004 docker docker
   docker_login https://nexus3.acumos.org:10003 docker docker
   docker_login https://nexus3.acumos.org:10002 docker docker
-  if [[ "$dist" == "ubuntu" ]]; then dns='kube-dns'
-    # .docker is created in $HOME on Ubuntu
-    sudo chown -R $USER:$USER ~/.docker
-  fi
 }
 
 function update_datasource() {
@@ -115,8 +95,6 @@ function update_blueprint() {
   if [[ -d microservice ]]; then
     log "copy the subfolders under 'microservice' from the unpacked solution.zip to /var/acumos"
 
-    sudo mkdir -p /var/acumos/log
-    sudo chown -R $USER:$USER /var/acumos
     # Note: copying microservice protofiles to /var/acumos, and sharing that
     # folder with probe, is redundant with the nginx-based probe design also
     # supported below, but is retained here for eventual migration to this
@@ -154,13 +132,7 @@ prepare_k8s() {
   fi
 
   log "Create k8s secret for image pulling from docker using ~/.docker/config.json"
-  if [[ "$dist" == "ubuntu" ]]; then dns='kube-dns'
-    # .docker is created in $HOME on Ubuntu
-    b64=$(cat ~/.docker/config.json | base64 -w 0)
-  else
-    # .docker is created in /root on Centos
-    b64=$(sudo cat /root/.docker/config.json | base64 -w 0)
-  fi
+  b64=$(cat ~/.docker/config.json | base64 -w 0)
 
   if [[ $(kubectl get secrets -n acumos | grep -c 'acumos-registry ') == 1 ]]; then
     kubectl delete secret -n acumos acumos-registry
@@ -228,6 +200,12 @@ function deploy_solution() {
   fi
 }
 
+if [[ $# -lt 3 ]]; then
+  if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then grep '#\. ' $0 | sed 's/#.//g'; fi
+  echo "All parameters not provided"
+  exit 1
+fi
+
 solution=$1
 username=$2
 password=$3
@@ -236,6 +214,8 @@ datasource=$4
 dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 export WORK_DIR=$(pwd)
 cd $solution
+log "retrieve the hostname:port of the Acumos platform docker proxy from the solution.yaml, using the 'image' attribute of any model microservice"
+dockerProxy=$(grep 'image.*\/' solution.yaml | grep -ve acumos.org | head -1 | sed 's/        image: //' | cut -d '/' -f 1)
 prepare_docker
 update_datasource
 update_blueprint
