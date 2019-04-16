@@ -21,7 +21,7 @@
 #. by deploy.sh
 #.
 #. Prerequisites:
-#. - Ubuntu Xenial server
+#. - test_model_prereqs.sh run by a user with sudo privileges
 #. - Via the Acumos platform, download a solution.zip deployment package for
 #.   a specific model, unzip the package into a folder, and enter that folder.
 #. - For simple models, also download the two artifacts below from the Acumos
@@ -48,21 +48,6 @@ function log() {
   fname=$(caller 0 | awk '{print $2}')
   fline=$(caller 0 | awk '{print $1}')
   echo; echo "$fname:$fline ($(date)) $1"
-}
-
-function setup_prereqs() {
-  if [[ "$dist" == "ubuntu" ]]; then
-    sudo apt install -y jq golang-go unzip
-  else
-    sudo yum install -y jq golang-go unzip
-  fi
-
-  if [[ "$(ls ~/protoc/bin/protoc)" == "" ]]; then
-    log "Download and install protobuf 3 (protoc) in ~/protoc"
-    # Per https://github.com/protocolbuffers/protobuf/releases
-    wget https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/protoc-3.6.1-linux-x86_64.zip
-    unzip protoc-3.6.1-linux-x86_64.zip -d ~/protoc
-  fi
 }
 
 function find_node() {
@@ -98,7 +83,7 @@ function test_model() {
       lastpkg=$(grep package microservice/$lastms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
       nextms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
     done
-    port=$(awk '/mc-api/,/nodePort/' solution.yaml | awk '/nodePort/ {print $2}')
+    port=$(awk '/mc-api/,/nodePort/' deploy/solution.yaml | awk '/nodePort/ {print $2}')
     set -x
     echo "$input" \
       | ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
@@ -117,7 +102,7 @@ function test_model() {
     lastms=$firstms
     lastmsg=$(jq -r ".service.listOfOperations[0].listOfOutputMessages[0].outPutMessageName" $json)
     lastpkg=$firstpkg
-    port=$(grep nodePort solution.yaml | cut -d ':' -f 2 | sed 's/ //')
+    port=$(grep nodePort deploy/solution.yaml | cut -d ':' -f 2 | sed 's/ //')
     set -x
     echo "$input" \
       | ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
@@ -128,7 +113,6 @@ function test_model() {
           --proto_path=. $proto
     set +x
   fi
-
 }
 
 input="$1"
@@ -137,5 +121,4 @@ proto=$3
 json=$4
 
 dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
-setup_prereqs
 test_model

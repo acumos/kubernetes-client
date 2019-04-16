@@ -19,16 +19,24 @@
 #
 #. What this is: Deployment script for Acumos solutions under private kubernetes
 #. clusters.
-#. 
+#.
 #. Prerequisites:
-#. - Ubuntu Xenial or Centos 7 server
+#. - Ubuntu Xenial/Bionic or Centos 7 server
+#. - User running this script is part of the "docker" group
 #. - Via the Acumos platform, download a solution.zip deployment package for
 #.   a specific solution/revision, and unzip the package into a folder
-#. Usage:
-#. - bash deploy.sh <solution> <user> <pass> [datasource]
-#.   solution: path to folder where solution.zip was unpacked
+#. - In the same folder where you unzipped the solution.zip, clone the Acumos
+#.   kubernetes-client repo (this script refers to templates from that repo)
+#.     git clone https://gerrit.acumos.org/r/kubernetes-client
+#.   and apply any patches you need to test with, if desired
+#.
+#. Usage: run this script from the folder where you unpacked solution.zip
+#. - bash deploy.sh <user> <pass> <namespace> <log_host> <log_port> [datasource]
 #.   user: username on the Acumos platform
 #.   pass: password on the Acumos platform
+#.   namespace: Kubernetes namespace to deploy the solution under
+#.   log_host: hostname of the logstash service
+#.   log_port: port of the logstash service
 #.   datasource: (optional) file path or URL of data source for databroker
 #.
 #. - To stop the solution and redeploy, run these commands before deploy.sh
@@ -51,40 +59,20 @@ function log() {
 
 function docker_login() {
   trap 'fail' ERR
-  while ! sudo docker login $1 -u $2 -p $3 ; do
+  while ! docker login $1 -u $2 -p $3 ; do
+    sleep 10
     log "Docker login failed at $1, trying again"
   done
 }
 
 function prepare_docker() {
   trap 'fail' ERR
-  log "retrieve the hostname:port of the Acumos platform docker proxy from the solution.yaml, using the 'image' attribute of any model microservice"
-  dockerProxy=$(grep 'image.*\/' solution.yaml | grep -ve acumos.org | head -1 | sed 's/        image: //' | cut -d '/' -f 1)
-
-  if [[ $(sudo grep -c $dockerProxy /etc/docker/daemon.json) -eq 0 ]]; then
-    log "configure the docker service to allow access to the Acumos platform docker proxy as an insecure registry."
-    cat << EOF | sudo tee /etc/docker/daemon.json
-{
-  "insecure-registries": [
-    "$dockerProxy"
-  ],
-  "disable-legacy-registry": true
-}
-EOF
-    sudo systemctl daemon-reload
-    sudo service docker restart
-  fi
-
   log "login to the Acumos platform docker proxy using the Acumos platform username and password provided by the user"
-  docker_login https://$dockerProxy $username $password
+  docker_login https://$dockerProxy $USER_ID $password
   log "Log into LF Nexus Docker repos"
   docker_login https://nexus3.acumos.org:10004 docker docker
   docker_login https://nexus3.acumos.org:10003 docker docker
   docker_login https://nexus3.acumos.org:10002 docker docker
-  if [[ "$dist" == "ubuntu" ]]; then dns='kube-dns'
-    # .docker is created in $HOME on Ubuntu
-    sudo chown -R $USER:$USER ~/.docker
-  fi
 }
 
 function update_datasource() {
@@ -115,8 +103,6 @@ function update_blueprint() {
   if [[ -d microservice ]]; then
     log "copy the subfolders under 'microservice' from the unpacked solution.zip to /var/acumos"
 
-    sudo mkdir -p /var/acumos/log
-    sudo chown -R $USER:$USER /var/acumos
     # Note: copying microservice protofiles to /var/acumos, and sharing that
     # folder with probe, is redundant with the nginx-based probe design also
     # supported below, but is retained here for eventual migration to this
@@ -147,50 +133,71 @@ prepare_k8s() {
   trap 'fail' ERR
   if [[ $(kubectl get namespaces | grep -c 'acumos ') -eq 0 ]]; then
     log "create a namespace 'acumos' using kubectl"
-    while ! kubectl create namespace acumos; do
+    while ! kubectl create namespace $NAMESPACE; do
       log "kubectl API is not yet ready ... waiting 10 seconds"
       sleep 10
     done
   fi
 
-  log "Create k8s secret for image pulling from docker using ~/.docker/config.json"
-  if [[ "$dist" == "ubuntu" ]]; then dns='kube-dns'
-    # .docker is created in $HOME on Ubuntu
-    b64=$(cat ~/.docker/config.json | base64 -w 0)
+  if [[ -d deploy ]]; then
+    for f in $(ls deploy); do
+      if kubectl delete -f deploy/$f; then echo "deploy/$f deleted"; fi
+      rm deploy/$f
+    done
+    sol=$(grep "app:" solution.yaml | awk '{print $2}' | uniq | sed ':a;N;$!ba;s/\n/ /g')
+    proxies=$(grep -m 1 "app: nginx-proxy" deploy/nginx-proxy*.yaml | awk '{print $2}' | sed ':a;N;$!ba;s/\n/ /g')
+    apps="modelconnector filebeat $sol $proxies"
+    for app in $apps; do
+      while [[ "$(kubectl get pods -n $NAMESPACE -l app=$app)" != "" ]]; do
+        log "Waiting for $app pod to terminate"
+        sleep 10
+      done
+    done
   else
-    # .docker is created in /root on Centos
-    b64=$(sudo cat /root/.docker/config.json | base64 -w 0)
+    mkdir deploy
   fi
 
-  if [[ $(kubectl get secrets -n acumos | grep -c 'acumos-registry ') == 1 ]]; then
-    kubectl delete secret -n acumos acumos-registry
+  log "Create k8s secret for image pulling from docker using ~/.docker/config.json"
+  b64=$(cat ~/.docker/config.json | base64 -w 0)
+
+  if [[ $(kubectl get secrets -n $NAMESPACE | grep -c 'acumos-registry ') == 1 ]]; then
+    kubectl delete secret -n $NAMESPACE acumos-registry
   fi
-  cat << EOF >acumos-registry.yaml
+  cat << EOF >deploy/acumos-registry.yaml
 apiVersion: v1
 kind: Secret
 metadata:
   name: acumos-registry
-  namespace: acumos
+  namespace: $NAMESPACE
 data:
   .dockerconfigjson: $b64
 type: kubernetes.io/dockerconfigjson
 EOF
 
-  kubectl create -f acumos-registry.yaml
+  kubectl create -f deploy/acumos-registry.yaml
+  cp solution.yaml deploy/.
+  log "Update solution.yaml to use namespace $NAMESPACE"
+  sed -i -- "s/namespace: acumos/namespace: $NAMESPACE/g" deploy/solution.yaml
+  log "Update solution.yaml to expose all blueprint components on port 3330"
+  i=8557
+  while [[ $i -lt 8567 ]]; do
+    sed -i -- "s/port: $i/port: 3330/g" deploy/solution.yaml
+    i=$((i+1))
+  done
 }
 
 function deploy_solution() {
   trap 'fail' ERR
   log "invoke kubectl to deploy the services and deployments in solution.yaml"
-  kubectl create -f solution.yaml
+  kubectl create -f deploy/solution.yaml
 
   if [[ $(grep -c 'app: databroker' solution.yaml) -gt 0 ]]; then
     log "monitor the status of the databroker service and deployment, and when they are running, send databroker.json to the databroker via its /configDB API"
-    databroker=$(kubectl get pods --namespace acumos | awk '/databroker/ {print $3}')
+    databroker=$(kubectl get pods -n $NAMESPACE | awk '/databroker/ {print $3}')
     while [[ "$databroker" != "Running" ]]; do
       log "databroker status is $databroker. Waiting 60 seconds"
       sleep 60
-      databroker=$(kubectl get pods --namespace acumos | awk '/databroker/ {print $3}')
+      databroker=$(kubectl get pods -n $NAMESPACE | awk '/databroker/ {print $3}')
     done
     log "databroker status is $databroker"
     log "send databroker.json to the Data Broker service via the /configDB API"
@@ -199,18 +206,18 @@ function deploy_solution() {
   fi
 
   log "Wait for all pods to be Running"
-  pods=$(kubectl get pods --namespace acumos | awk '/-/ {print $1}')
+  pods=$(kubectl get pods -n $NAMESPACE | awk '/-/ {print $1}')
   while [[ "$pods" == "No resources found." ]]; do
     log "pods are not yet created, waiting 10 seconds"
-    pods=$(kubectl get pods --namespace acumos | awk '/-/ {print $1}')
+    pods=$(kubectl get pods -n $NAMESPACE | awk '/-/ {print $1}')
   done
 
   for pod in $pods; do
-    status=$(kubectl get pods -n acumos | awk "/$pod/ {print \$3}")
+    status=$(kubectl get pods -n $NAMESPACE | awk "/$pod/ {print \$3}")
     while [[ "$status" != "Running" ]]; do
       log "$pod status is $status. Waiting 10 seconds"
       sleep 10
-      status=$(kubectl get pods -n acumos | awk "/$pod/ {print \$3}")
+      status=$(kubectl get pods -n $NAMESPACE | awk "/$pod/ {print \$3}")
     done
     log "$pod status is $status"
   done
@@ -219,26 +226,115 @@ function deploy_solution() {
     log "Patch dockerinfo.json as workaround for https://jira.acumos.org/browse/ACUMOS-1791"
     sed -i -- 's/"container_name":"probe"/"container_name":"Probe"/' dockerinfo.json
 
+    log "Update blueprint.json and dockerinfo.json for use of logging components"
+    sol=$(grep "app:" solution.yaml | awk '{print $2}' | grep -v 'modelconnector' | uniq | sed ':a;N;$!ba;s/\n/ /g')
+    apps="$sol"
+    cp blueprint.json deploy/.
+    cp dockerinfo.json deploy/.
+    for app in $apps; do
+       sed -i -- "s/$app/nginx-proxy-$app/g" deploy/dockerinfo.json
+       sed -i -- "s/\"container_name\": \"$app\"/\"container_name\": \"nginx-proxy-$app\"/g" deploy/blueprint.json
+     done
+
     log "send dockerinfo.json to the Model Connector service via the /putDockerInfo API"
-    curl -v -X PUT -H "Content-Type: application/json" \
-      http://127.0.0.1:30555/putDockerInfo -d @dockerinfo.json
+    while ! curl -v -X PUT -H "Content-Type: application/json" \
+      http://127.0.0.1:30555/putDockerInfo -d @deploy/dockerinfo.json; do
+        log "wait for Model Connector service via the /putDockerInfo API"
+        sleep 10
+    done
     log "send blueprint.json to the Model Connector service via the /putBlueprint API"
     curl -v -X PUT -H "Content-Type: application/json" \
-      http://127.0.0.1:30555/putBlueprint -d @blueprint.json
+      http://127.0.0.1:30555/putBlueprint -d @deploy/blueprint.json
   fi
 }
 
-solution=$1
-username=$2
-password=$3
-datasource=$4
+function replace_env() {
+  trap 'fail' ERR
+  local files; local vars; local v; local vv
+  log "Set variable values in k8s templates at $1"
+  set +x
+  if [[ -f $1 ]]; then files="$1";
+  else files="$1/*.yaml"; fi
+  vars=$(grep -Rho '<[^<.]*>' $files | sed 's/<//' | sed 's/>//' | sort | uniq)
+  for f in $files; do
+    for v in $vars ; do
+      eval vv=\$$v
+      sed -i -- "s~<$v>~$vv~g" $f
+    done
+  done
+  set -x
+}
+
+function get_model_env() {
+  trap 'fail' ERR
+#  awk "/Service/{f=1}/name:/ && f{print \$2; exit}"
+  image=$(awk "/name: $1/{f=1}/image:/ && f{print \$2; exit}" solution.yaml | cut -d '_' -f 2)
+  export SOLUTION_ID=$(echo $image | cut -d ':' -f 1)
+  export REVISION_ID=$(echo $image | cut -d ':' -f 2)
+}
+
+function deploy_logging() {
+  trap 'fail' ERR
+  cp kubernetes-client/deploy/private/templates/filebeat*.yaml deploy/.
+  replace_env deploy
+  kubectl create -f deploy/filebeat-configmap.yaml
+  kubectl create -f deploy/filebeat-rbac.yaml
+  kubectl create -f deploy/filebeat-daemonset.yaml
+  if [[ -d microservice ]]; then
+    # Composite model
+    sol=$(grep "app:" solution.yaml | awk '{print $2}' | grep -v 'modelconnector' | uniq | sed ':a;N;$!ba;s/\n/ /g')
+    apps="$sol"
+    i=8557
+    for app in $apps; do
+      cp kubernetes-client/deploy/private/templates/nginx-configmap.yaml deploy/$app-nginx-configmap.yaml
+      cp kubernetes-client/deploy/private/templates/nginx-service.yaml deploy/$app-nginx-service.yaml
+      cp kubernetes-client/deploy/private/templates/nginx-deployment.yaml deploy/$app-nginx-deployment.yaml
+      sed -i -- "s/8550/$i/g" deploy/$app-nginx-service.yaml
+      i=$((i+1))
+      export MODEL_NAME=$app
+      get_model_env $app
+      replace_env deploy
+      kubectl create -f deploy/$app-nginx-configmap.yaml
+      kubectl create -f deploy/$app-nginx-service.yaml
+      kubectl create -f deploy/$app-nginx-deployment.yaml
+    done
+  else
+    # Simple model
+    app=$(grep "app:" solution.yaml | awk '{print $2}' | grep -v 'modelconnector' | uniq)
+    cp kubernetes-client/deploy/private/templates/nginx-configmap.yaml deploy/$app-nginx-configmap.yaml
+    cp kubernetes-client/deploy/private/templates/nginx-service.yaml deploy/$app-nginx-service.yaml
+    cp kubernetes-client/deploy/private/templates/nginx-deployment.yaml deploy/$app-nginx-deployment.yaml
+    export MODEL_NAME=$(grep -m 1 "name:" solution.yaml | awk '{print $2}')
+    get_model_env $app
+    replace_env deploy
+    kubectl create -f deploy/$app-nginx-configmap.yaml
+    kubectl create -f deploy/$app-nginx-service.yaml
+    kubectl create -f deploy/$app-nginx-deployment.yaml
+  fi
+}
+
+if [[ $# -lt 3 ]]; then
+  if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then grep '#\. ' $0 | sed 's/#.//g'; fi
+  echo "All parameters not provided"
+  exit 1
+fi
+
+set -x
+export USER_ID=$1
+password=$2
+export NAMESPACE=$3
+export LOGSTASH_HOST=$4
+export LOGSTASH_PORT=$5
+datasource=$6
 
 dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 export WORK_DIR=$(pwd)
-cd $solution
+log "retrieve the hostname:port of the Acumos platform docker proxy from the solution.yaml, using the 'image' attribute of any model microservice"
+dockerProxy=$(grep 'image.*\/' solution.yaml | grep -ve acumos.org | head -1 | sed 's/        image: //' | cut -d '/' -f 1)
 prepare_docker
 update_datasource
 update_blueprint
 prepare_k8s
 deploy_solution
+deploy_logging
 cd $WORK_DIR
