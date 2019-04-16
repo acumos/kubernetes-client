@@ -1,0 +1,86 @@
+apiVersion: extensions/v1beta1
+# ===============LICENSE_START=======================================================
+# Acumos Apache-2.0
+# ===================================================================================
+# Copyright (C) 2019 Nordix Foundation
+# Modifications Copyright (C) 2019 AT&T Intellectual Property. All rights reserved.
+# ===================================================================================
+# This Acumos software file is distributed by AT&T
+# under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# This file is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ===============LICENSE_END=========================================================
+#
+# What this is: Kubernetes daemonset template for filebeat as deployed with
+# Acumos models in kubernetes environments, for logging of model events.
+#
+# Usage: intended to be customized and created for the specific deployment by
+# deploy.sh
+#
+
+kind: DaemonSet
+metadata:
+  name: filebeat
+  namespace: <NAMESPACE>
+  labels:
+    app: filebeat
+spec:
+  selector:
+    matchLabels:
+      app: filebeat
+  template:
+    metadata:
+      labels:
+        app: filebeat
+    spec:
+      serviceAccountName: filebeat
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat:6.0.1
+        args: [
+          "-c", "/etc/filebeat-<NAMESPACE>.yml",
+          "-e",
+          "-d", "publish"
+        ]
+        securityContext:
+          runAsUser: 0
+          # If using Red Hat OpenShift uncomment this:
+          #privileged: true
+        resources:
+          limits:
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/filebeat-<NAMESPACE>.yml
+          readOnly: true
+          subPath: filebeat-<NAMESPACE>.yml
+        - name: data
+          mountPath: /usr/share/filebeat/data
+        - name: varlognginx
+          mountPath: /var/log/nginx/<NAMESPACE>
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          defaultMode: 0600
+          name: filebeat-config-<NAMESPACE>
+      - name: varlognginx
+        hostPath:
+          path: /var/log/nginx/<NAMESPACE>
+          type: DirectoryOrCreate
+      # data folder stores a registry of read status for all files, so we don't send everything again on a Filebeat pod restart
+      - name: data
+        hostPath:
+          path: /var/lib/filebeat-data
+          type: DirectoryOrCreate
