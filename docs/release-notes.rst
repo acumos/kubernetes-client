@@ -23,6 +23,11 @@ Kubernetes Client Release Notes
 ...........................
 Kubernetes-Client Component
 ...........................
+------------------------------
+Version 2.0.8, 18 April 2019
+---------------------------------
+* update CDS 2.2.1 for Kubernetes-client (`ACUMOS-2767 <https://jira.acumos.org/browse/ACUMOS-2767>`_)
+
 ---------------------------------
 Version 2.0.7, 28 March 2019
 ---------------------------------
