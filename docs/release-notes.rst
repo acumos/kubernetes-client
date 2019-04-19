@@ -23,41 +23,43 @@ Kubernetes Client Release Notes
 ...........................
 Kubernetes-Client Component
 ...........................
-------------------------------
+
+----------------------------
 Version 2.0.8, 18 April 2019
----------------------------------
+----------------------------
+* Deploy k8s based models with model usage tracking (`ACUMOS-2759 <https://jira.acumos.org/browse/ACUMOS-2759>`_)
 * update CDS 2.2.1 for Kubernetes-client (`ACUMOS-2767 <https://jira.acumos.org/browse/ACUMOS-2767>`_)
 
----------------------------------
+----------------------------
 Version 2.0.7, 28 March 2019
----------------------------------
+----------------------------
 * Logging Standardization (`ACUMOS-2330 <https://jira.acumos.org/browse/ACUMOS-2330>`_)
 * Increase Sonar coverage to at least 40% (`ACUMOS-2367 <https://jira.acumos.org/browse/ACUMOS-2367>`_)
 * update CDS 2.1.2 for kubernetes-client (`ACUMOS-2669 <https://jira.acumos.org/browse/ACUMOS-2669>`_)
 
----------------------------------
+---------------------------
 Version 2.0.4, 1 March 2019
----------------------------------
+---------------------------
 * update CDS 2.1.1 for Kubernetes-client (`ACUMOS-2589 <https://jira.acumos.org/browse/ACUMOS-2589>`_)
 
-------------------------------
+-------------------------------
 Version 2.0.3, 15 February 2019
----------------------------------
+-------------------------------
 * update CDS 2.0.7 for kubernetes-client (`ACUMOS-2528 <https://jira.acumos.org/browse/ACUMOS-2528>`_)
 
 ------------------------------
 Version 2.0.2, 4 February 2019
----------------------------------
+------------------------------
 * IST2: Deploy to Azure : Message Improvements(`ACUMOS-863 <https://jira.acumos.org/browse/ACUMOS-863>`_)
 
--------------------------------
+------------------------------
 Version 2.0.0, 28 January 2019
----------------------------------
+------------------------------
 * update CDS 2.0.4 for kubernetes-client (`ACUMOS-2412 <https://jira.acumos.org/browse/ACUMOS-2412>`_)
 
------------------------------
+------------------------------
 Version 1.1.0, 12 October 2018
------------------------------
+------------------------------
 * ACUMOS-1884: Download solution package for deploy to local does not work for simple solution in K8S <https://jira.acumos.org/browse/ACUMOS-1884>'
 
 -----------------------------
@@ -86,8 +88,8 @@ Released version as of Release Candidate 0 (RC0).
 
 * `ACUMOS-1289: Deploy model to Kubernetes Environment <https://jira.acumos.org/browse/ACUMOS-1289>`_
 
-  * `Update release notes <https://gerrit.acumos.org/r/3039>`_
-  * `Update release notes  <https://gerrit.acumos.org/r/#/c/3076/>`_
+  * `Update release notes 3039 <https://gerrit.acumos.org/r/#/c/3039/>`_
+  * `Update release notes 3076 <https://gerrit.acumos.org/r/#/c/3076/>`_
 
 --------------------------------
 Version 0.0.9, 24 September 2018
