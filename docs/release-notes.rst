@@ -23,9 +23,11 @@ Kubernetes Client Release Notes
 ...........................
 Kubernetes-Client Component
 ...........................
-------------------------------
+
+---------------------------------
 Version 2.0.8, 18 April 2019
 ---------------------------------
+* Deploy k8s based models with model usage tracking (`ACUMOS-2759 <https://jira.acumos.org/browse/ACUMOS-2759>`_)
 * update CDS 2.2.1 for Kubernetes-client (`ACUMOS-2767 <https://jira.acumos.org/browse/ACUMOS-2767>`_)
 
 ---------------------------------
