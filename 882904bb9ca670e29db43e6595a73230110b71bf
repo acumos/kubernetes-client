@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "2b349318_248a7e9b",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-04-19T16:48:10Z",
+      "side": 1,
+      "message": "This is part that Santosh is working on? https://jira.acumos.org/browse/ACUMOS-2780 created for this.",
+      "parentUuid": "2f8afa6d_8426f636",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8b215df9_92a42c11",
         "filename": "deploy/private/templates/filebeat-daemonset.yaml",
         "patchSetId": 2
@@ -95,6 +113,24 @@
     },
     {
       "key": {
+        "uuid": "cec85642_bdd69bb6",
+        "filename": "deploy/private/templates/filebeat-daemonset.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-04-19T16:48:10Z",
+      "side": 1,
+      "message": "Ok created jira to help track this for updates - we do not need to change this now .. but wanted to say that this version will be tied to the platform version of ELK. https://jira.acumos.org/browse/ACUMOS-2781",
+      "parentUuid": "dfc7bb24_378368b7",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "962238d0_596484c4",
         "filename": "deploy/private/templates/filebeat-rbac.yaml",
         "patchSetId": 2
@@ -130,6 +166,30 @@
       "side": 1,
       "message": "Do you mean in this file specifcally? I asked that question by email and got no response. We have little time for such late changes.",
       "parentUuid": "962238d0_596484c4",
+      "range": {
+        "startLine": 8,
+        "startChar": 46,
+        "endLine": 8,
+        "endChar": 77
+      },
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9efbd02d_ef72ae36",
+        "filename": "deploy/private/templates/filebeat-rbac.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-04-19T16:48:10Z",
+      "side": 1,
+      "message": "sorry for the late change -- thank you for updating",
+      "parentUuid": "6e705a77_110340fa",
       "range": {
         "startLine": 8,
         "startChar": 46,
@@ -200,6 +260,24 @@
     },
     {
       "key": {
+        "uuid": "7b17e43e_69f0435d",
+        "filename": "deploy/private/templates/nginx-configmap.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-04-19T16:48:10Z",
+      "side": 1,
+      "message": "We have updated wiki with correct formatting - https://wiki.acumos.org/display/LM/Model+Usage+Tracking+Proof+of+Concept+-+Boreas#ModelUsageTrackingProofofConcept-Boreas-sidecar-nginx-proxy-\u003c\u003cmodel\u003e\u003e.yaml-[New]",
+      "parentUuid": "23245ac0_e65f80ac",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5067ff31_7ac2475a",
         "filename": "deploy/private/templates/nginx-configmap.yaml",
         "patchSetId": 2
@@ -229,6 +307,24 @@
       "side": 1,
       "message": "same",
       "parentUuid": "5067ff31_7ac2475a",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d37e7983_ddd9ab37",
+        "filename": "deploy/private/templates/nginx-configmap.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-04-19T16:48:10Z",
+      "side": 1,
+      "message": "wiki updated with format",
+      "parentUuid": "b5cb179b_a181353f",
       "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
       "serverId": "655300a2-7a56-4504-9153-881edd907bea",
       "unresolved": false
@@ -270,6 +366,24 @@
     },
     {
       "key": {
+        "uuid": "90fe7a9d_d0273496",
+        "filename": "deploy/private/templates/nginx-configmap.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-04-19T16:48:10Z",
+      "side": 1,
+      "message": "We found this was confusing with internal testing. Since the server_name it not an external domain name. -- leave it for now -- we will be updating nginx proxy config documentation today to include model runner 2 support based on our testing of the face detect model.- - ACUMOS-2782",
+      "parentUuid": "a0253583_18eadc6c",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fd61df11_582e397d",
         "filename": "deploy/private/templates/nginx-configmap.yaml",
         "patchSetId": 2
@@ -299,6 +413,24 @@
       "side": 1,
       "message": "We will get to that later. No time to change this now and break waht we have tested. The new model runner is not ready AFAICT.",
       "parentUuid": "fd61df11_582e397d",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bde4935c_35ca7c44",
+        "filename": "deploy/private/templates/nginx-configmap.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-04-19T16:48:10Z",
+      "side": 1,
+      "message": "yes captured in jira ACUMOS-2782 can be done after S5",
+      "parentUuid": "1546f6a4_798029d0",
       "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
       "serverId": "655300a2-7a56-4504-9153-881edd907bea",
       "unresolved": false
