@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "2f8afa6d_8426f636",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-04-19T12:55:36Z",
+      "side": 1,
+      "message": "This is interim and will be removed with the k8s-client implements the spring variables.",
+      "parentUuid": "c0b9343d_684c1861",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8b215df9_92a42c11",
         "filename": "deploy/private/templates/filebeat-daemonset.yaml",
         "patchSetId": 2
@@ -59,6 +77,24 @@
     },
     {
       "key": {
+        "uuid": "dfc7bb24_378368b7",
+        "filename": "deploy/private/templates/filebeat-daemonset.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-04-19T12:55:36Z",
+      "side": 1,
+      "message": "We will get around to that, but not this version.",
+      "parentUuid": "b76277d0_dfe58ca4",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "962238d0_596484c4",
         "filename": "deploy/private/templates/filebeat-rbac.yaml",
         "patchSetId": 2
@@ -70,6 +106,30 @@
       "writtenOn": "2019-04-18T19:43:51Z",
       "side": 1,
       "message": "Please change to Nordix Foundation",
+      "range": {
+        "startLine": 8,
+        "startChar": 46,
+        "endLine": 8,
+        "endChar": 77
+      },
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6e705a77_110340fa",
+        "filename": "deploy/private/templates/filebeat-rbac.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-04-19T12:55:36Z",
+      "side": 1,
+      "message": "Do you mean in this file specifcally? I asked that question by email and got no response. We have little time for such late changes.",
+      "parentUuid": "962238d0_596484c4",
       "range": {
         "startLine": 8,
         "startChar": 46,
@@ -122,6 +182,24 @@
     },
     {
       "key": {
+        "uuid": "23245ac0_e65f80ac",
+        "filename": "deploy/private/templates/nginx-configmap.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-04-19T12:55:36Z",
+      "side": 1,
+      "message": "This came from you. I do not know how to break it up. Let\u0027s leave it for now.",
+      "parentUuid": "2c58629a_b37c6d7d",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5067ff31_7ac2475a",
         "filename": "deploy/private/templates/nginx-configmap.yaml",
         "patchSetId": 2
@@ -133,6 +211,24 @@
       "writtenOn": "2019-04-18T19:43:51Z",
       "side": 1,
       "message": "line is very long",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b5cb179b_a181353f",
+        "filename": "deploy/private/templates/nginx-configmap.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-04-19T12:55:36Z",
+      "side": 1,
+      "message": "same",
+      "parentUuid": "5067ff31_7ac2475a",
       "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
       "serverId": "655300a2-7a56-4504-9153-881edd907bea",
       "unresolved": false
@@ -156,6 +252,24 @@
     },
     {
       "key": {
+        "uuid": "a0253583_18eadc6c",
+        "filename": "deploy/private/templates/nginx-configmap.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-04-19T12:55:36Z",
+      "side": 1,
+      "message": "Does this affect functionality? It works as-is.",
+      "parentUuid": "1e1de8ce_2ab35f2d",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fd61df11_582e397d",
         "filename": "deploy/private/templates/nginx-configmap.yaml",
         "patchSetId": 2
@@ -167,6 +281,24 @@
       "writtenOn": "2019-04-18T19:43:51Z",
       "side": 1,
       "message": "With new model runner there may be some additional settings needed -\n\n-- CORs is not on by default and we may need to provide an option to enable cors. We will need to update blueprint with how to add cors to nginx config map. If users want compatibility with older model runner then we should give guidance on how to do this. \n\n-- Excluded paths to not log--  where logs are not needed / wanted because they are just noise.\n   such as swagger html calls\n   heartbeat\n   This one is still being discussed.\n\nAbility to correlate different loggers (future)\n\n-- Addition of request id to make multiple loggers be able to correlate the log results ie model may log using api and nginx logger \n\nproxy_set_header X-Request-ID $request_id;        # Pass to app server",
+      "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1546f6a4_798029d0",
+        "filename": "deploy/private/templates/nginx-configmap.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-04-19T12:55:36Z",
+      "side": 1,
+      "message": "We will get to that later. No time to change this now and break waht we have tested. The new model runner is not ready AFAICT.",
+      "parentUuid": "fd61df11_582e397d",
       "revId": "882904bb9ca670e29db43e6595a73230110b71bf",
       "serverId": "655300a2-7a56-4504-9153-881edd907bea",
       "unresolved": false
