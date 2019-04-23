@@ -63,7 +63,23 @@ public class DeploymentBean {
 	private String probeSchemaPort;
 	private String nginxImageName;
 	private String nexusEndPointURL;
+	private String logstashHost;
+	private String logstashPort;
 	
+	
+	
+	public String getLogstashHost() {
+		return logstashHost;
+	}
+	public void setLogstashHost(String logstashHost) {
+		this.logstashHost = logstashHost;
+	}
+	public String getLogstashPort() {
+		return logstashPort;
+	}
+	public void setLogstashPort(String logstashPort) {
+		this.logstashPort = logstashPort;
+	}
 	public String getProbeExternalPort() {
 		return probeExternalPort;
 	}

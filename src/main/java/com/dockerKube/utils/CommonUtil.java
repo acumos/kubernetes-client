@@ -30,6 +30,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.dockerKube.beans.DeploymentBean;
+
 import java.net.InetAddress;
 
 public class CommonUtil {
@@ -122,6 +124,19 @@ public class CommonUtil {
 		logger.debug("list "+list);    
 		logger.debug(" iterateImageMap End ");
 		return list;
+	}
+	
+	public String getEnvFileDetails(DeploymentBean dBean) throws Exception{
+		logger.debug("getEnvFileDetails Start ");
+		String setEnvDeploy = ""
+				+ "#!/bin/bash \n"
+				+ "export SOLUTION_ID="+dBean.getSolutionId()+" \n"
+				+ "export REVISION_ID="+dBean.getSolutionRevisionId()+" \n"
+				+ "export LOGSTASH_HOST="+dBean.getLogstashHost()+" \n"
+				+ "export LOGSTASH_PORT="+dBean.getLogstashPort()+" \n";
+		
+		logger.debug("getEnvFileDetails End " +setEnvDeploy);
+		return setEnvDeploy;
 	}
 	
 	

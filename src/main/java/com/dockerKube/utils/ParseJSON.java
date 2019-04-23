@@ -886,4 +886,19 @@ public class ParseJSON {
 		   return probeIndicatorValue;
 				
 	   }
+	 public void getBluprintDetail(String jsonFile)throws  Exception{
+		 log.debug("getBluprintDetail Start");
+		 try
+			{
+			Object obj  = new JSONParser().parse(new StringReader(jsonFile));
+	        JSONObject jo = (JSONObject) obj;
+	        String prettyJSONString = jo.toString();
+	        String name = (String) jo.get(DockerKubeConstants.NAME);
+	        String version = (String) jo.get(DockerKubeConstants.VERSION);
+	 }catch(Exception e) {
+		 log.error("checkProbeIndicator failed", e);
+			throw e;
+	 }
+		log.debug("getBluprintDetail End");
+	}		 
  }

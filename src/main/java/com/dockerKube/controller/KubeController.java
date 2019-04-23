@@ -95,6 +95,9 @@ public class KubeController {
 		 String nginxImageName=(env.getProperty(DockerKubeConstants.NGINX_IMAGE_NAME) != null) ? env.getProperty(DockerKubeConstants.NGINX_IMAGE_NAME) : "";
 		 String nexusEndPointURL=(env.getProperty(DockerKubeConstants.NEXUS_END_POINTURL) != null) ? env.getProperty(DockerKubeConstants.NEXUS_END_POINTURL) : "";
 		 
+		 String logstashHost=(env.getProperty(DockerKubeConstants.LOGSTASH_HOST) != null) ? env.getProperty(DockerKubeConstants.LOGSTASH_HOST) : "";
+		 String logstashPort=(env.getProperty(DockerKubeConstants.LOGSTASH_PORT) != null) ? env.getProperty(DockerKubeConstants.LOGSTASH_PORT) : "";
+		 
 		 
 	   	 dBean.setSolutionId(solutionId);
     	 dBean.setSolutionRevisionId(revisionId);
@@ -131,6 +134,8 @@ public class KubeController {
     	 dBean.setProbeSchemaPort(probeSchemaPort);
     	 dBean.setNginxImageName(nginxImageName);
     	 dBean.setNexusEndPointURL(nexusEndPointURL);
+    	 dBean.setLogstashHost(logstashHost);
+    	 dBean.setLogstashPort(logstashPort);
     	 
     	 log.debug("probeExternalPort "+probeExternalPort);
     	 log.debug("probeSchemaPort "+probeSchemaPort);
@@ -166,6 +171,8 @@ public class KubeController {
 	   	 log.debug("singleModelPort "+singleModelPort);
 	   	 log.debug("singleNodePort "+singleNodePort);
 	   	 log.debug("singleTargetPort "+singleTargetPort);
+	   	 log.debug("logstashHost "+logstashHost);
+	   	 log.debug("logstashPort "+logstashPort);
 	   	try{
 	   	  String solutionToolKitType=kubeService.getSolutionCode(solutionId, cmnDataUrl, cmnDataUser, cmnDataPd);
 	   	log.debug("solutionToolKitType "+solutionToolKitType);

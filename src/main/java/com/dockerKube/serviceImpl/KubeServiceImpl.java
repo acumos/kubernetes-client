@@ -467,6 +467,14 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 					 hmap.put(DockerKubeConstants.KUBE_DEPLOY_SH, bOutput);
 					 logger.debug(DockerKubeConstants.KUBE_DEPLOY_SH+" "+bOutput);
 				 }
+				 //Env file
+				 bOutput = new ByteArrayOutputStream(12);
+				 String deployEnvScript=util.getEnvFileDetails(dBean);
+				 if(deployEnvScript!=null && !"".equals(deployEnvScript)){
+					 bOutput.write(deployEnvScript.getBytes());
+					 hmap.put(DockerKubeConstants.KUBE_DEPLOY_ENV_SH, bOutput);
+					 logger.debug(DockerKubeConstants.KUBE_DEPLOY_ENV_SH+" "+bOutput);
+				 }
 				if(dBean.getBluePrintjson()!=null && !"".equals(dBean.getBluePrintjson())){
 					bOutput = new ByteArrayOutputStream(12);
 					bOutput.write(dBean.getBluePrintjson().getBytes());
@@ -1074,7 +1082,13 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 						 hmap.put(DockerKubeConstants.KUBE_DEPLOY_SH, bOutput);
 						 logger.debug(DockerKubeConstants.KUBE_DEPLOY_SH+"   "+bOutput);
 					 }
-					 
+					 bOutput = new ByteArrayOutputStream(12);
+					 String deployEnvScript=util.getEnvFileDetails(dBean);
+					 if(deployEnvScript!=null && !"".equals(deployEnvScript)){
+						 bOutput.write(deployEnvScript.getBytes());
+						 hmap.put(DockerKubeConstants.KUBE_DEPLOY_ENV_SH, bOutput);
+						 logger.debug(DockerKubeConstants.KUBE_DEPLOY_ENV_SH+" "+bOutput);
+					 } 
 				
 				
 				
