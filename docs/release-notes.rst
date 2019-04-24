@@ -24,6 +24,11 @@ Kubernetes Client Release Notes
 Kubernetes-Client Component
 ...........................
 ------------------------------
+Version 2.0.9, 24 April 2019
+---------------------------------
+* Require - k8s-client implements the spring variables required for model runner (`ACUMOS-2780 <https://jira.acumos.org/browse/ACUMOS-2780>`_)
+
+------------------------------
 Version 2.0.8, 18 April 2019
 ---------------------------------
 * update CDS 2.2.1 for Kubernetes-client (`ACUMOS-2767 <https://jira.acumos.org/browse/ACUMOS-2767>`_)
