@@ -5,7 +5,7 @@
 
 	<groupId>com.dockerKube</groupId>
 	<artifactId>kubernetes-client</artifactId>
-	<version>2.0.9-SNAPSHOT</version>
+	<version>2.0.10-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>kubernetes-client</name>
@@ -291,7 +291,7 @@
 							<!-- Specify a tag to avoid default tag "latest" -->
 							<name>kubernetes-client:${project.version}</name>
 							<build>
-								<from>frolvlad/alpine-oraclejre8:slim</from>
+								<from>openjdk:8-jre-slim</from>
 								<tags>
 									<!-- Add tag with build number -->
 									<tag>${project.version}-b${build.number}</tag>

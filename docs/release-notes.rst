@@ -24,6 +24,11 @@ Kubernetes Client Release Notes
 Kubernetes-Client Component
 ...........................
 ------------------------------
+Version 2.0.10, 30 April 2019
+---------------------------------
+* K8S client migrate Docker base image away from frolvlad/alpine-oracle (`ACUMOS-2545 <https://jira.acumos.org/browse/ACUMOS-2545>`_)
+
+------------------------------
 Version 2.0.9, 24 April 2019
 ---------------------------------
 * Require - k8s-client implements the spring variables required for model runner (`ACUMOS-2780 <https://jira.acumos.org/browse/ACUMOS-2780>`_)
