@@ -43,6 +43,8 @@ data:
     proxy_set_header X-Forwarded-Proto  $scheme;
     proxy_set_header X-Forwarded-Host   $host;
     proxy_set_header X-Forwarded-Port   $server_port;
+    # Used to correlate logs from model runner
+    proxy_set_header X-Request-ID       $request_id;
   nginx.conf: |
     user www-data;
     pid /run/nginx.pid;
