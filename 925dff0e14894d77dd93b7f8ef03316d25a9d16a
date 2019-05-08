@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "51c00687_fc026e2e",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-05-08T22:39:41Z",
+      "side": 0,
+      "message": "yes I have tested this with params -- as long as AIO is passing them -- \nthere are 3 changes needed in system integration\n- https://gerrit.acumos.org/r/#/c/4332/1/AIO/acumos_env.sh -- add \nexport ACUMOS_LOGSTASH_HOST\u003d$ACUMOS_DOMAIN\nexport ACUMOS_LOGSTASH_PORT\u003d30500\n\n- in kubernetes-client add new config\nhttps://gerrit.acumos.org/r/#/c/4332/1/AIO/kubernetes/deployment/kubernetes-client-deployment.yaml\n\n- Using at least this version of kubernetes client service\nexport KUBERNETES_CLIENT_IMAGE\u003d$ACUMOS_STAGING/kubernetes-client:2.0.10 (we will need to bump once this commit is merged)\n   ",
+      "parentUuid": "5125ed39_2ebeaa8b",
+      "range": {
+        "startLine": 34,
+        "startChar": 0,
+        "endLine": 39,
+        "endChar": 43
+      },
+      "revId": "925dff0e14894d77dd93b7f8ef03316d25a9d16a",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c96880b7_aa0fb6cf",
         "filename": "deploy/private/deploy.sh",
         "patchSetId": 2
@@ -36,6 +60,30 @@
       "writtenOn": "2019-05-08T15:54:01Z",
       "side": 0,
       "message": "Restore for now",
+      "range": {
+        "startLine": 326,
+        "startChar": 0,
+        "endLine": 328,
+        "endChar": 13
+      },
+      "revId": "925dff0e14894d77dd93b7f8ef03316d25a9d16a",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "38cae981_118d1ed8",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-05-08T22:39:41Z",
+      "side": 0,
+      "message": "We should not require these .. they are correctly setup with source ./deploy_env.sh -- if all the parts are accepted. If you don\u0027t think we can get all the parts merged then we will revert.",
+      "parentUuid": "c96880b7_aa0fb6cf",
       "range": {
         "startLine": 326,
         "startChar": 0,

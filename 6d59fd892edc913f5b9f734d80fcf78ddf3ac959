@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "b4133e4f_26cbc5c9",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-05-08T22:39:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "69998ef3_8b0c3a4b",
+      "range": {
+        "startLine": 133,
+        "startChar": 0,
+        "endLine": 133,
+        "endChar": 68
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "451c8cc7_4302a263",
         "filename": "deploy/private/deploy.sh",
         "patchSetId": 2
@@ -94,6 +118,30 @@
     },
     {
       "key": {
+        "uuid": "cab9fc0b_eb775963",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-05-08T22:39:41Z",
+      "side": 1,
+      "message": "Good point -- I meant to reference https://wiki.acumos.org/pages/viewpage.action?pageId\u003d17696349\n\nAs we are changing the model runner specification we should just way version.. model runner rest version.",
+      "parentUuid": "2d6a2072_32143aab",
+      "range": {
+        "startLine": 289,
+        "startChar": 0,
+        "endLine": 289,
+        "endChar": 35
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5f994e79_e2779502",
         "filename": "deploy/private/deploy.sh",
         "patchSetId": 2
@@ -105,6 +153,30 @@
       "writtenOn": "2019-05-08T15:54:01Z",
       "side": 1,
       "message": "Why are there what look like two ports as path elements?",
+      "range": {
+        "startLine": 290,
+        "startChar": 0,
+        "endLine": 290,
+        "endChar": 44
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2b606e21_8ac951a2",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-05-08T22:39:41Z",
+      "side": 1,
+      "message": "I am having issues with accessing /v2/manifest docker api with https port .. in the docker proxy log it is showing unauthorized even when I try passing to curl user name and password it still fails.",
+      "parentUuid": "5f994e79_e2779502",
       "range": {
         "startLine": 290,
         "startChar": 0,
@@ -140,6 +212,30 @@
     },
     {
       "key": {
+        "uuid": "18e99282_7ab9080b",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 323,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-05-08T22:39:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ec4f13c4_e39b4878",
+      "range": {
+        "startLine": 323,
+        "startChar": 0,
+        "endLine": 323,
+        "endChar": 31
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c254aad0_418a2ac3",
         "filename": "deploy/private/deploy.sh",
         "patchSetId": 2
@@ -163,6 +259,30 @@
     },
     {
       "key": {
+        "uuid": "c224c9f3_9d53be63",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 325,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-05-08T22:39:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c254aad0_418a2ac3",
+      "range": {
+        "startLine": 325,
+        "startChar": 0,
+        "endLine": 325,
+        "endChar": 33
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "11f359e8_9dedb0bf",
         "filename": "deploy/private/deploy.sh",
         "patchSetId": 2
@@ -174,6 +294,30 @@
       "writtenOn": "2019-05-08T15:54:01Z",
       "side": 1,
       "message": "Use log function",
+      "range": {
+        "startLine": 379,
+        "startChar": 0,
+        "endLine": 380,
+        "endChar": 43
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "53e72d17_deb9159a",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-05-08T22:39:41Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "11f359e8_9dedb0bf",
       "range": {
         "startLine": 379,
         "startChar": 0,
