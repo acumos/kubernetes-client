@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5125ed39_2ebeaa8b",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 0,
+      "message": "These parameters should not be deleted. When we have tested them being added in the environment script maybe, but not yet.",
+      "range": {
+        "startLine": 34,
+        "startChar": 0,
+        "endLine": 39,
+        "endChar": 43
+      },
+      "revId": "925dff0e14894d77dd93b7f8ef03316d25a9d16a",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c96880b7_aa0fb6cf",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 0,
+      "message": "Restore for now",
+      "range": {
+        "startLine": 326,
+        "startChar": 0,
+        "endLine": 328,
+        "endChar": 13
+      },
+      "revId": "925dff0e14894d77dd93b7f8ef03316d25a9d16a",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}

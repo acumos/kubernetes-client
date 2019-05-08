@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "69998ef3_8b0c3a4b",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 1,
+      "message": "Indent, and add quotes and a following space around the namespace e.g. \"$NAMESPACE \" to avoid partial matches.",
+      "range": {
+        "startLine": 133,
+        "startChar": 0,
+        "endLine": 133,
+        "endChar": 68
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "451c8cc7_4302a263",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 279,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 1,
+      "message": "DOCKER_IMAGE_VERSION (here and elsewhere)",
+      "range": {
+        "startLine": 279,
+        "startChar": 9,
+        "endLine": 279,
+        "endChar": 28
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bbfcc78a_cd6d310b",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 288,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 1,
+      "message": "Do you mean to use $DOCKER_IMAGE ?\nIf you want to output something to the terminal use the \"log\" function.",
+      "range": {
+        "startLine": 288,
+        "startChar": 0,
+        "endLine": 288,
+        "endChar": 22
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2d6a2072_32143aab",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 289,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 1,
+      "message": "What does this mean?",
+      "range": {
+        "startLine": 289,
+        "startChar": 0,
+        "endLine": 289,
+        "endChar": 35
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5f994e79_e2779502",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 1,
+      "message": "Why are there what look like two ports as path elements?",
+      "range": {
+        "startLine": 290,
+        "startChar": 0,
+        "endLine": 290,
+        "endChar": 44
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ec4f13c4_e39b4878",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 323,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 1,
+      "message": "do not use $ in left-hand side of assignment",
+      "range": {
+        "startLine": 323,
+        "startChar": 0,
+        "endLine": 323,
+        "endChar": 31
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c254aad0_418a2ac3",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 325,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 1,
+      "message": "As above",
+      "range": {
+        "startLine": 325,
+        "startChar": 0,
+        "endLine": 325,
+        "endChar": 33
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "11f359e8_9dedb0bf",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 380,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-05-08T15:54:01Z",
+      "side": 1,
+      "message": "Use log function",
+      "range": {
+        "startLine": 379,
+        "startChar": 0,
+        "endLine": 380,
+        "endChar": 43
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
