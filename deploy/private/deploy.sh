@@ -3,6 +3,7 @@
 # Acumos Apache-2.0
 # ===================================================================================
 # Copyright (C) 2018 AT&T Intellectual Property & Tech Mahindra. All rights reserved.
+# Modifications Copyright (C) 2019 Nordix Foundation.
 # ===================================================================================
 # This Acumos software file is distributed by AT&T and Tech Mahindra
 # under the Apache License, Version 2.0 (the "License");
@@ -31,12 +32,10 @@
 #.   and apply any patches you need to test with, if desired
 #.
 #. Usage: run this script from the folder where you unpacked solution.zip
-#. - bash deploy.sh <user> <pass> <namespace> <log_host> <log_port> [datasource]
+#. - bash deploy.sh <user> <pass> <namespace> [datasource]
 #.   user: username on the Acumos platform
 #.   pass: password on the Acumos platform
 #.   namespace: Kubernetes namespace to deploy the solution under
-#.   log_host: hostname of the logstash service
-#.   log_port: port of the logstash service
 #.   datasource: (optional) file path or URL of data source for databroker
 #.
 #. - To stop the solution and redeploy, run these commands before deploy.sh
@@ -131,7 +130,7 @@ function update_blueprint() {
 
 prepare_k8s() {
   trap 'fail' ERR
-  if [[ $(kubectl get namespaces | grep -c 'acumos ') -eq 0 ]]; then
+  if [[ $(kubectl get namespaces | grep -c "$NAMESPACE ") -eq 0 ]]; then
     log "create a namespace 'acumos' using kubectl"
     while ! kubectl create namespace $NAMESPACE; do
       log "kubectl API is not yet ready ... waiting 10 seconds"
@@ -267,10 +266,44 @@ function replace_env() {
 
 function get_model_env() {
   trap 'fail' ERR
+  echo "App" $1;
 #  awk "/Service/{f=1}/name:/ && f{print \$2; exit}"
-  image=$(awk "/name: $1/{f=1}/image:/ && f{print \$2; exit}" solution.yaml | cut -d '_' -f 2)
-  export SOLUTION_ID=$(echo $image | cut -d ':' -f 1)
-  export REVISION_ID=$(echo $image | cut -d ':' -f 2)
+
+  export DOCKER_IMAGE_TAG=$(awk "/name: $1/{f=1}/image:/ && f{print \$2; exit}" solution.yaml)
+
+  export DOCKER_IMAGE=$(python3 -c "import sys, os; text=os.environ.get('DOCKER_IMAGE_TAG'); \
+    firstSlash =text.index('/');\
+    lastUnderScore = text.rindex(':');\
+    print(text[firstSlash+1:lastUnderScore]);")
+
+  export DOCKER_IMAGE_VERION=$(python3 -c "import sys, os; text=os.environ.get('DOCKER_IMAGE_TAG'); \
+    lastColon =text.rindex(':');\
+    lengthOfImage = len(text);\
+    print(text[lastColon+1:lengthOfImage]);")
+
+  # Determine solution id for each docker image - to determine if composite case works
+  export SOLUTION_ID=$(python3 -c "import sys, os; text=os.environ.get('DOCKER_IMAGE'); \
+    lastUnderscore =text.rindex('_');\
+    print(text[lastUnderscore+1:len(text)]);")
+  
+  echo "image" $image;
+  # is using micro service standard
+  dockerProxyHttp=${dockerProxy/30883/30882}
+  export MODEL_RUNNER_STANDARD=$(curl -k $dockerProxyHttp/v2/$DOCKER_IMAGE/manifests/$DOCKER_IMAGE_VERION | \
+    python3 -c "import sys, json; \
+    manifest = json.load(sys.stdin); \
+    compatibility = manifest['history'][0]['v1Compatibility']; \
+    labels = json.loads(compatibility)['config']['Labels']; \
+    print(int('micro-service-rest-api-version' in labels));"  | tr -d '\r')
+ }
+
+
+function gitclone_kubernetes_client() {
+  if [ ! -d "./kubernetes-client" ]
+  then
+    log "Clone kubernetes repo"
+    git clone https://gerrit.acumos.org/r/kubernetes-client
+  fi
 }
 
 function deploy_logging() {
@@ -286,13 +319,17 @@ function deploy_logging() {
     apps="$sol"
     i=8557
     for app in $apps; do
-      cp kubernetes-client/deploy/private/templates/nginx-configmap.yaml deploy/$app-nginx-configmap.yaml
+      export MODEL_NAME=$app
+      get_model_env $app
+      modelrunnerversion="v1";
+      if [[ $MODEL_RUNNER_STANDARD -lt 0 ]]; then
+        modelrunnerversion="v2";
+      fi
+      cp kubernetes-client/deploy/private/templates/nginx-configmap.yaml deploy/$app-nginx-configmap-$modelrunnerversion.yaml
       cp kubernetes-client/deploy/private/templates/nginx-service.yaml deploy/$app-nginx-service.yaml
       cp kubernetes-client/deploy/private/templates/nginx-deployment.yaml deploy/$app-nginx-deployment.yaml
       sed -i -- "s/8550/$i/g" deploy/$app-nginx-service.yaml
       i=$((i+1))
-      export MODEL_NAME=$app
-      get_model_env $app
       replace_env deploy
       kubectl create -f deploy/$app-nginx-configmap.yaml
       kubectl create -f deploy/$app-nginx-service.yaml
@@ -301,11 +338,12 @@ function deploy_logging() {
   else
     # Simple model
     app=$(grep "app:" solution.yaml | awk '{print $2}' | grep -v 'modelconnector' | uniq)
+    export MODEL_NAME=$(grep -m 1 "name:" solution.yaml | awk '{print $2}')
+    get_model_env $app
     cp kubernetes-client/deploy/private/templates/nginx-configmap.yaml deploy/$app-nginx-configmap.yaml
     cp kubernetes-client/deploy/private/templates/nginx-service.yaml deploy/$app-nginx-service.yaml
     cp kubernetes-client/deploy/private/templates/nginx-deployment.yaml deploy/$app-nginx-deployment.yaml
-    export MODEL_NAME=$(grep -m 1 "name:" solution.yaml | awk '{print $2}')
-    get_model_env $app
+    
     replace_env deploy
     kubectl create -f deploy/$app-nginx-configmap.yaml
     kubectl create -f deploy/$app-nginx-service.yaml
@@ -320,12 +358,14 @@ if [[ $# -lt 3 ]]; then
 fi
 
 set -x
+source ./deploy_env.sh
+[ -z "$LOGSTASH_HOST" ] && echo "Need to set LOGSTASH_HOST" && exit 1;
+[ -z "$LOGSTASH_PORT" ] && echo "Need to set LOGSTASH_PORT" && exit 1;
 export USER_ID=$1
 password=$2
 export NAMESPACE=$3
-export LOGSTASH_HOST=$4
-export LOGSTASH_PORT=$5
-datasource=$6
+datasource=$4
+gitclone_kubernetes_client
 
 dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 export WORK_DIR=$(pwd)
@@ -338,3 +378,7 @@ prepare_k8s
 deploy_solution
 deploy_logging
 cd $WORK_DIR
+
+log "Use this command to get info from Kubernetes"
+log "kubectl get pods,svc -n  $NAMESPACE";
+kubectl get pods,svc -n  $NAMESPACE
