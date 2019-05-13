@@ -562,11 +562,14 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
    */
 public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,DeploymentBean dBean)throws Exception{
 	    logger.debug("getSingleSolutionYMLFile Start");
-		String solutionYaml="";
-		String serviceYml=getSingleSolutionService(singleModelPort,dBean);
-		String deploymentYml=getSingleSolutionDeployment(imageTag,dBean);
-		solutionYaml=serviceYml;
-		solutionYaml=solutionYaml+deploymentYml;
+		String solutionYaml = "";
+		String solutionId = dBean.getSolutionId();
+		CommonUtil cutil = new CommonUtil();
+		String modelName = cutil.getModelName(imageTag, solutionId);
+		String serviceYml = getSingleSolutionService(singleModelPort, dBean, modelName);
+		String deploymentYml = getSingleSolutionDeployment(imageTag, dBean, modelName);
+		solutionYaml = serviceYml;
+		solutionYaml = solutionYaml+deploymentYml;
 		logger.debug("solutionYaml "+solutionYaml);
 		logger.debug("getSingleSolutionYMLFile End");
 		return solutionYaml;
@@ -575,13 +578,15 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
  * @param modelPort
  *              - port of model
  * @param dBean
-   *           - DeploymentBean
+ *           - DeploymentBean
+ * @param modelName
+ *           - modelName
  * @return serviceYml
  *              - yml string 
  * @throws Exception
  *               - exception for method
  */
-  public String getSingleSolutionService(String modelPort,DeploymentBean dBean)throws Exception{
+  public String getSingleSolutionService(String modelPort, DeploymentBean dBean, String modelName)throws Exception{
 	  logger.debug("getSingleSolutionService Start");
 	    String serviceYml="";
 	    ObjectMapper objectMapper = new ObjectMapper();
@@ -592,16 +597,18 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 	    /*ObjectNode kindDataNode = objectMapper.createObjectNode();
 	    kindDataNode.put(DockerKubeConstants.KIND_YML, DockerKubeConstants.SERVICE_YML);*/
 	    apiRootNode.put(DockerKubeConstants.KIND_YML, DockerKubeConstants.SERVICE_YML);
-	    
-	    ObjectNode metadataNode = objectMapper.createObjectNode();
+		
+		String modelNameYml = (modelName != null) ? modelName : DockerKubeConstants.MYMODEL_YML;
+
+	  ObjectNode metadataNode = objectMapper.createObjectNode();
 		metadataNode.put(DockerKubeConstants.NAMESPACE_YML, DockerKubeConstants.ACUMOS_YML);
-		metadataNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.MYMODEL_YML);
+		metadataNode.put(DockerKubeConstants.NAME_YML, modelNameYml);
 		apiRootNode.set(DockerKubeConstants.METADATA_YML, metadataNode);
 		
 		ObjectNode specNode = objectMapper.createObjectNode();
 		
 		ObjectNode selectorNode = objectMapper.createObjectNode();
-		selectorNode.put(DockerKubeConstants.APP_YML, DockerKubeConstants.MYMODEL_YML);
+		selectorNode.put(DockerKubeConstants.APP_YML, modelNameYml);
 		specNode.set(DockerKubeConstants.SELECTOR_YML, selectorNode);
 		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.NODE_TYPE_PORT_YML);
 		
@@ -626,12 +633,14 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
    *             - image name
    * @param dBean
    *             - DeploymentBean            
+   * @param modelName
+   *           - modelName
    * @return modelPort
    *                - model port
    * @throws Exception
    *               - exception for method
    */
-  public String getSingleSolutionDeployment(String imageTag,DeploymentBean dBean)throws Exception{
+  public String getSingleSolutionDeployment(String imageTag,DeploymentBean dBean, String modelName)throws Exception{
 	    logger.debug("getSingleSolutionDeployment Start");
 	    ObjectMapper objectMapper = new ObjectMapper();
 	    CommonUtil cutil=new CommonUtil();
@@ -642,10 +651,11 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 	    
 	    ObjectNode metadataNode = objectMapper.createObjectNode();
 		metadataNode.put(DockerKubeConstants.NAMESPACE_DEP_YML, DockerKubeConstants.ACUMOS_DEP_YML);
-		metadataNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.MYMODEL_DEP_YML);
+		String modelNameYml = (modelName != null) ? modelName : DockerKubeConstants.MYMODEL_DEP_YML;
+		metadataNode.put(DockerKubeConstants.NAME_DEP_YML, modelNameYml);
 		
 		ObjectNode labelsNode = objectMapper.createObjectNode();
-		labelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.MYMODEL_DEP_YML);
+		labelsNode.put(DockerKubeConstants.APP_DEP_YML, modelNameYml);
 		metadataNode.put(DockerKubeConstants.LABELS_DEP_YML, labelsNode);
 		
 		kindRootNode.set(DockerKubeConstants.METADATA_DEP_YML, metadataNode);
@@ -655,7 +665,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		ObjectNode matchLabelsNode = objectMapper.createObjectNode();
-		matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.MYMODEL_DEP_YML);
+		matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, modelNameYml);
 		selectorNode.set(DockerKubeConstants.MATCHLABELS_DEP_YML, matchLabelsNode);
 		
 		specNode.set(DockerKubeConstants.SELECTOR_DEP_YML, selectorNode);
@@ -663,14 +673,14 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		ObjectNode templateNode = objectMapper.createObjectNode();
 		ObjectNode metadataTemplateNode = objectMapper.createObjectNode();
 		ObjectNode labelsTemplateNode = objectMapper.createObjectNode();
-		labelsTemplateNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.MYMODEL_DEP_YML);
+		labelsTemplateNode.put(DockerKubeConstants.APP_DEP_YML, modelNameYml);
 		metadataTemplateNode.set(DockerKubeConstants.LABELS_DEP_YML, labelsTemplateNode);
 		
 		
 		ObjectNode specTempNode = objectMapper.createObjectNode();
 		ArrayNode containerArrayNode = templateNode.arrayNode();
 		ObjectNode containerNode  = objectMapper.createObjectNode();
-		containerNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.MYMODEL_DEP_YML);
+		containerNode.put(DockerKubeConstants.NAME_DEP_YML, modelNameYml);
 		containerNode.put(DockerKubeConstants.IMAGE_DEP_YML, 
 				cutil.getProxyImageName(imageTag, dBean.getDockerProxyHost(), dBean.getDockerProxyPort()));
 		

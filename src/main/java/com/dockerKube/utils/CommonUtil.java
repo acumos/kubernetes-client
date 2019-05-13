@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +38,54 @@ import java.net.InetAddress;
 
 public class CommonUtil {
 	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+	
+	/** 
+	 * Extract the model name from the given imageName and solutionId.
+	 * Following format based on docker image path is expected:
+	 *   host:port/modelName_solutionId:version
+	 * For example,
+	 *   acumos-aio-1:30883/face_privacy_filter_detect_96fc199b-eb96-4162-b33e-b1fc629b28c5:1
+	 * 
+	 * @param imageName
+	 *            - image name
+	 * @param solutionId
+	 * 						- solutionId
+	 * @return modelName.
+	 *              - model name derived from the imageName
+	 *      	      - returns null, if cannot derived from the expected imageName format
+	 */
+	public String getModelName(String imageName, String solutionId){
+		logger.debug("Start-getModelName: imgName:" + imageName + ", solutionId:" + solutionId);
+		String modelName = null;
+		if (imageName != null) {
+			// imageName=acumos-aio-host:30883/face_privacy_filter_detect_96fc199b-eb96-4162-b33e-b1fc629b28c5:1
+			String[] imageArr = imageName.split("/");
+			if (imageArr != null && imageArr.length >= 2 && imageArr[1] != null) {
+				String[] imageNameArr = imageArr[1].split(":");
+				if (imageNameArr != null && imageNameArr[0] != null) {
+					// imageFullName derived as face_privacy_filter_detect_96fc199b-eb96-4162-b33e-b1fc629b28c5:1
+					String imageFullName = imageNameArr[0];
+					Pattern p = Pattern.compile("(.*)(" + solutionId + ")");
+					Matcher m = p.matcher(imageFullName);
+					if (m.matches()) {
+						// modelName as face_privacy_filter_detect_
+						modelName = m.group(1);
+						if (modelName != null) {
+							if ((modelName.endsWith("_") || modelName.endsWith("-"))) {
+								modelName = modelName.substring(0, modelName.length() - 1);
+							}
+							// make dns-compliant i.e. replace '_' with '-'
+							modelName = modelName.replaceAll("_", "-");
+							logger.debug("-getModelName " + modelName);
+						}
+					}
+				}
+			}
+		}
+		
+		logger.debug(" End-getModelName " + modelName);
+		return modelName;
+	}
 	/** geContainerName method is used to get containerName
 	 * @param imageName
 	 *            - image name
