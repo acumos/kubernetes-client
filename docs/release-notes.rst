@@ -23,19 +23,27 @@ Kubernetes Client Release Notes
 ...........................
 Kubernetes-Client Component
 ...........................
+
+------------------------------
+Version 2.0.11, 8 May 2019
+------------------------------
+* Improve deploy.sh to use environment setup in 2.0.9
+* Support multiple model runner versions
+  (`ACUMOS-2782 <https://jira.acumos.org/browse/ACUMOS-2782>`_)
+
 ------------------------------
 Version 2.0.10, 30 April 2019
----------------------------------
+------------------------------
 * K8S client migrate Docker base image away from frolvlad/alpine-oracle (`ACUMOS-2545 <https://jira.acumos.org/browse/ACUMOS-2545>`_)
 
 ------------------------------
 Version 2.0.9, 24 April 2019
----------------------------------
+------------------------------
 * Require - k8s-client implements the spring variables required for model runner (`ACUMOS-2780 <https://jira.acumos.org/browse/ACUMOS-2780>`_)
 
 ------------------------------
 Version 2.0.8, 18 April 2019
----------------------------------
+------------------------------
 * update CDS 2.2.1 for Kubernetes-client (`ACUMOS-2767 <https://jira.acumos.org/browse/ACUMOS-2767>`_)
 
 ---------------------------------
@@ -50,24 +58,24 @@ Version 2.0.4, 1 March 2019
 ---------------------------------
 * update CDS 2.1.1 for Kubernetes-client (`ACUMOS-2589 <https://jira.acumos.org/browse/ACUMOS-2589>`_)
 
-------------------------------
+-------------------------------
 Version 2.0.3, 15 February 2019
----------------------------------
+-------------------------------
 * update CDS 2.0.7 for kubernetes-client (`ACUMOS-2528 <https://jira.acumos.org/browse/ACUMOS-2528>`_)
 
 ------------------------------
 Version 2.0.2, 4 February 2019
----------------------------------
+------------------------------
 * IST2: Deploy to Azure : Message Improvements(`ACUMOS-863 <https://jira.acumos.org/browse/ACUMOS-863>`_)
 
 -------------------------------
 Version 2.0.0, 28 January 2019
----------------------------------
+-------------------------------
 * update CDS 2.0.4 for kubernetes-client (`ACUMOS-2412 <https://jira.acumos.org/browse/ACUMOS-2412>`_)
 
------------------------------
+------------------------------
 Version 1.1.0, 12 October 2018
------------------------------
+------------------------------
 * ACUMOS-1884: Download solution package for deploy to local does not work for simple solution in K8S <https://jira.acumos.org/browse/ACUMOS-1884>'
 
 -----------------------------
