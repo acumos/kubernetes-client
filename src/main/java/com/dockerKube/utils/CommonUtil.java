@@ -178,17 +178,115 @@ public class CommonUtil {
 	
 	public String getEnvFileDetails(DeploymentBean dBean) throws Exception{
 		logger.debug("getEnvFileDetails Start ");
+
+		Map<String, String> solRevIdMap = dBean.getSolutionRevisionIdMap();
+		String solId = "";
+		String solRevId = "";
+		String compSolId = "";
+		String compRevId = "";
+		if (solRevIdMap != null) {
+			for (String solIdKey: solRevIdMap.keySet()) {
+				if (solRevId.length() > 0) {
+					solId += ",";
+					solRevId += ",";
+				}
+				solId += solIdKey;
+				solRevId += solIdKey + ":" + solRevIdMap.get(solIdKey);
+			}
+
+			// more than one entry for composite case
+			if (solRevIdMap.keySet().size() > 1) {
+				compSolId = dBean.getSolutionId();
+				compRevId = dBean.getSolutionRevisionId();
+			}
+		}
+
+		// # Single model
+		//   - SOLUTION_ID=<SINGLE_MDL_SOL_ID>
+		//   - SOL_REVISION_ID=<SINGLE_MDL_REVISION_ID>
+		// # Composite model
+		//   - SOLUTION_ID=<COMP_MDL_SOL_ID>,<MDL_1_SOL_ID>,<MDL_2_SOL_ID>,...
+		//   - SOL_REVISION_ID=<COMP_MDL_SOL_ID>:<COMP_MDL_REVISION_ID>,<MDL_1_SOL_ID>:<MDL_1_REVISION_ID>,<MDL_2_SOL_ID>:<MDL_2_REVISION_ID>,...
 		String setEnvDeploy = ""
 				+ "#!/bin/bash \n"
-				+ "export SOLUTION_ID="+dBean.getSolutionId()+" \n"
-				+ "export REVISION_ID="+dBean.getSolutionRevisionId()+" \n"
-				+ "export LOGSTASH_HOST="+dBean.getLogstashHost()+" \n"
-				+ "export LOGSTASH_PORT="+dBean.getLogstashPort()+" \n";
+				+ "export SOLUTION_ID="+solId+"\n"
+				+ "export SOL_REVISION_ID="+solRevId+"\n"
+				+ "export LOGSTASH_HOST="+dBean.getLogstashHost()+"\n"
+				+ "export LOGSTASH_IP="+dBean.getLogstashIp()+"\n"
+				+ "export LOGSTASH_PORT="+dBean.getLogstashPort()+"\n";
 		
+		if (compSolId != null && compSolId.length() > 0) {
+			setEnvDeploy += "export COMP_SOLUTION_ID="+compSolId+"\n"
+				+ "export COMP_REVISION_ID="+compRevId+"\n";
+		}
+
 		logger.debug("getEnvFileDetails End " +setEnvDeploy);
 		return setEnvDeploy;
 	}
 	
-	
+	/** 
+	 * Parse the given image path and extract values.
+	 * Following format based on docker image path is expected:
+	 *   host:port/modelName_solutionId:version
+	 * For example,
+	 *   acumos-aio-1:30883/face_privacy_filter_detect_96fc199b-eb96-4162-b33e-b1fc629b28c5:1
+	 * 
+	 * @param imageName
+	 *            - image name
+	 * @return map with key/value pair for each parsed item with key as
+	 * 							- DockerKubeConstants.DOCKER_HOST
+	 * 							- DockerKubeConstants.DOCKER_PORT
+	 * 							- DockerKubeConstants.MODEL_NAME
+	 * 							- DockerKubeConstants.SOLUTION_ID
+	 * 							- DockerKubeConstants.VERSION
+	 *      	 - returns empty map, if cannot derived from the expected imageName format
+	 */
+	public static Map<String, String> parseImageToken(String imageName) throws Exception {
+		logger.debug("Start-parseImageToken: imgName:" + imageName);
+		Map<String, String> map = new HashMap<String, String>();
+		if (imageName != null) {
+			// imageName=acumos-aio-host:30883/face_privacy_filter_detect_96fc199b-eb96-4162-b33e-b1fc629b28c5:1
+			String[] imageArr = imageName.split("/");
+			if (imageArr.length >= 2) {
+
+				// extract docker host:port info
+				String[] dockerInfoArr = imageArr[0].split(":");
+				if (dockerInfoArr.length > 0) {
+          map.put(DockerKubeConstants.DOCKER_HOST, dockerInfoArr[0]);
+          if (dockerInfoArr.length > 1) {
+            map.put(DockerKubeConstants.DOCKER_PORT, dockerInfoArr[1]);
+          }
+        }
+
+        // extract modelName:solutionId:version info
+				String[] imageNameArr = imageArr[1].split(":");
+				if (imageNameArr.length > 0) {
+          if (imageNameArr.length > 1) {
+            map.put(DockerKubeConstants.VERSION, imageNameArr[1]);
+          }
+					// modelSolTkn derived as face_privacy_filter_detect_96fc199b-eb96-4162-b33e-b1fc629b28c5
+					String modelSolTkn = imageNameArr[0];
+          int underscoreLastIndex = modelSolTkn.lastIndexOf("_");
+          if (underscoreLastIndex == -1) {
+            throw new Exception("cannot find the solutionId match from input imagePath " + imageName);
+          } else {
+            String modelName = modelSolTkn.substring(0, underscoreLastIndex);
+						String solutionId = modelSolTkn.substring(underscoreLastIndex + 1);
+						
+						// make dns-compliant i.e. replace '_' with '-'
+						modelName = modelName.replaceAll("_", "-");
+
+            map.put(DockerKubeConstants.MODEL_NAME, modelName);
+            map.put(DockerKubeConstants.SOLUTION_ID, solutionId);
+          }
+				}
+			}
+		}
+		
+		logger.debug(" End-parseImageToken " + map.get("dockerHost") 
+			+ "::" + map.get("dockerPort") + "::" + map.get("modelName") 
+			+ "::" + map.get("solutionId") + "::" + map.get("version"));
+		return map;
+	}
 
 }

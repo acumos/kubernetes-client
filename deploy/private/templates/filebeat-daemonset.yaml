@@ -84,3 +84,7 @@ spec:
         hostPath:
           path: /var/lib/filebeat-data
           type: DirectoryOrCreate
+      hostAliases:
+      - ip: "<LOGSTASH_IP>"
+        hostnames:
+        - "<LOGSTASH_HOST>"

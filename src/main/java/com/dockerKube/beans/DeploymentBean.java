@@ -20,6 +20,7 @@
 package com.dockerKube.beans;
 
 import java.util.List;
+import java.util.Map;
 
 public class DeploymentBean {
 
@@ -64,7 +65,9 @@ public class DeploymentBean {
 	private String nginxImageName;
 	private String nexusEndPointURL;
 	private String logstashHost;
+	private String logstashIp;
 	private String logstashPort;
+	private Map<String, String> solutionRevisionIdMap;
 	
 	
 	
@@ -73,6 +76,12 @@ public class DeploymentBean {
 	}
 	public void setLogstashHost(String logstashHost) {
 		this.logstashHost = logstashHost;
+	}
+	public String getLogstashIp() {
+		return logstashIp;
+	}
+	public void setLogstashIp(String logstashIp) {
+		this.logstashIp = logstashIp;
 	}
 	public String getLogstashPort() {
 		return logstashPort;
@@ -339,7 +348,11 @@ public class DeploymentBean {
 	public void setSolutionYml(String solutionYml) {
 		this.solutionYml = solutionYml;
 	}
-	
-	
+	public Map<String, String> getSolutionRevisionIdMap() {
+		return solutionRevisionIdMap;
+	}
+	public void setSolutionRevisionIdMap(Map<String, String> solutionRevisionIdMap) {
+		this.solutionRevisionIdMap = solutionRevisionIdMap;
+	}
 
 }
