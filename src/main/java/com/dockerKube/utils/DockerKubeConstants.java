@@ -230,4 +230,9 @@ public class DockerKubeConstants {
 	public static final String LOGSTASH_HOST="logstash.host";
 	public static final String LOGSTASH_PORT="logstash.port";
 	
+	public static final String DOCKER_HOST="dockerHost";
+	public static final String DOCKER_PORT="dockerPort";
+	public static final String MODEL_NAME="modelName";
+	public static final String SOLUTION_ID="solutionId";
+
 }

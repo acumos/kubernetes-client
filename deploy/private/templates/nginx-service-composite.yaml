@@ -18,31 +18,21 @@ apiVersion: v1
 # limitations under the License.
 # ===============LICENSE_END=========================================================
 #
-# What this is: Kubernetes configmap template for nginx as deployed with
+# What this is: Kubernetes service template for nginx as deployed with
 # Acumos models in kubernetes environments, for logging of model events.
 #
 # Usage: intended to be customized and created for the specific deployment by
 # deploy.sh
 #
-
-kind: ConfigMap
+kind: Service
 metadata:
-  name: filebeat-config-<NAMESPACE>
   namespace: <NAMESPACE>
-  labels:
-    app: filebeat
-data:
-  filebeat-<NAMESPACE>.yml: |-
-    filebeat.prospectors:
-      - type: log
-        paths:
-          - /var/log/nginx/<NAMESPACE>/model-usage-*.log
-        tags: [ "acumos-model-usage-logs" ]
-        close_inactive: 20m
-        json.keys_under_root: true
-
-    # output.console:
-    #   pretty: true
-
-    output.logstash:
-      hosts: ["<LOGSTASH_HOST>:<LOGSTASH_PORT>"]
+  name: nginx-proxy-<MODEL_NAME>
+spec:
+  selector:
+    app: nginx-proxy-<MODEL_NAME>
+  type: ClusterIP
+  ports:
+  - name: nginx-proxy-api
+    port: 8550
+    targetPort: 80

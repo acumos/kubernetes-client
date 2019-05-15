@@ -83,13 +83,14 @@ function test_model() {
       lastpkg=$(grep package microservice/$lastms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
       nextms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
     done
-    port=$(awk '/mc-api/,/nodePort/' deploy/solution.yaml | awk '/nodePort/ {print $2}')
+    port=$(kubectl get svc -n acumos | awk '/nginx-proxy-mc/{print $5}' | cut -d '/' -f 1 | cut -d ':' -f 2)
     set -x
     echo "$input" \
       | ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
           --proto_path=microservice/$firstms microservice/$firstms/model.proto \
-      | curl -s --request POST --header "Content-Type: application/protobuf" \
-          --data-binary @- http://$host:$port/$firstop \
+      | curl -s --request POST -H "Content-Type: application/vnd.google.protobuf" \
+          -H "Accept: application/vnd.google.protobuf" \
+          --data-binary @- http://$host:$port/model/methods/$firstop \
       | ~/protoc/bin/protoc --decode $lastpkg.$lastmsg \
           --proto_path=microservice/$lastms microservice/$lastms/model.proto
     set +x
