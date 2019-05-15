@@ -28,45 +28,44 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: <NAMESPACE>
-  name: nginx-proxy-<MODEL_NAME>
+  name: nginx-proxy-mc
   labels:
-    app: nginx-proxy-<MODEL_NAME>
+    app: nginx-proxy-mc
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nginx-proxy-<MODEL_NAME>
+      app: nginx-proxy-mc
   template:
     metadata:
       labels:
-        app: nginx-proxy-<MODEL_NAME>
-        logbeat: nginx-proxy-file-beat
+        app: nginx-proxy-mc
     spec:
       imagePullSecrets:
       - name: docker-registry
       containers:
-      - name: nginx-proxy-<MODEL_NAME>
+      - name: nginx-proxy-mc
         image: nginx:1.15
         ports:
         - name: proxy-api
           containerPort: 80
         volumeMounts:
-            - name: nginx-proxy-config-volume-<MODEL_NAME>
+            - name: nginx-proxy-config-volume-mc
               mountPath: /etc/nginx/proxy.conf
               subPath: proxy.conf
-            - name: nginx-proxy-config-volume-<MODEL_NAME>
+            - name: nginx-proxy-config-volume-mc
               mountPath: /etc/nginx/cors.conf
               subPath: cors.conf
-            - name: nginx-proxy-config-volume-<MODEL_NAME>
+            - name: nginx-proxy-config-volume-mc
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
-            - name: nginx-proxy-volume-<MODEL_NAME>
+            - name: nginx-proxy-volume-mc
               mountPath: /var/log/nginx/<NAMESPACE>
       volumes:
-        - name: nginx-proxy-config-volume-<MODEL_NAME>
+        - name: nginx-proxy-config-volume-mc
           configMap:
-            name: nginx-proxy-conf-<MODEL_NAME>
-        - name: nginx-proxy-volume-<MODEL_NAME>
+            name: nginx-proxy-conf-mc
+        - name: nginx-proxy-volume-mc
           hostPath:
             path: /var/log/nginx/<NAMESPACE>
             type: DirectoryOrCreate
