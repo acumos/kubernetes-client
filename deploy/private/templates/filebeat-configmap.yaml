@@ -36,7 +36,7 @@ data:
     filebeat.prospectors:
       - type: log
         paths:
-          - /var/log/nginx/<NAMESPACE>/access-*.log
+          - /var/log/nginx/<NAMESPACE>/model-usage-*.log
         tags: [ "acumos-model-usage-logs" ]
         close_inactive: 20m
         json.keys_under_root: true

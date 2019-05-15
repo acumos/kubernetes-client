@@ -61,12 +61,10 @@ public class KubeServiceImplTest {
 		logger.info("getSingleSolutionYMLFileTest Start");
 		DeploymentBean dBean =new DeploymentBean();
 		KubeServiceImpl impl=new KubeServiceImpl();
-		dBean.setSingleNodePort("30333");
 		dBean.setSingleModelPort("8556");
-		dBean.setSingleTargetPort("30333");
+		dBean.setSingleTargetPort("3330");
 		dBean.setDockerProxyHost("http://host");
 		dBean.setDockerProxyPort("4243");
-		dBean.setSingleTargetPort("30333");
 		impl.getSingleSolutionYMLFile("repo/image:1", "30333", dBean);
 		logger.info("getSingleSolutionYMLFileTestt End");
 	}
