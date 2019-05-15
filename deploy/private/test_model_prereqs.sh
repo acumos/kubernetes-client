@@ -59,4 +59,3 @@ function setup_prereqs() {
 
 dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 setup_prereqs
-test_model

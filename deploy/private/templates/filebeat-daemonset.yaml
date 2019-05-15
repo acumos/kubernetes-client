@@ -84,3 +84,7 @@ spec:
         hostPath:
           path: /var/lib/filebeat-data
           type: DirectoryOrCreate
+      hostAliases:
+      - ip: "<ACUMOS_ELK_HOST_IP>"
+        hostnames:
+        - "<ACUMOS_ELK_HOST>"

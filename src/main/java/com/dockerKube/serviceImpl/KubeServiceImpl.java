@@ -88,6 +88,7 @@ public class KubeServiceImpl implements KubeService  {
 	public byte[] singleSolutionDetails(DeploymentBean dBean,String imageTag,String singleModelPort)throws Exception{
 		logger.debug("singleSolutionDetails start");
 		logger.debug("imageTag "+imageTag +" singleModelPort "+singleModelPort);
+		getSolutionRevisionMap(dBean);
 		byte[] solutionZip=null;
 		String solutionYaml=getSingleSolutionYMLFile(imageTag,singleModelPort,dBean);
 		dBean.setSolutionYml(solutionYaml);
@@ -111,7 +112,8 @@ public class KubeServiceImpl implements KubeService  {
 	   	 logger.debug("contList "+contList);
 	   	 dBean.setContainerBeanList(contList);
 	   	 getprotoDetails(dBean.getContainerBeanList(),dBean);
-	   	 logger.debug("Proto Details");
+			 logger.debug("Proto Details");
+			 getSolutionRevisionMap(dBean);
 	   	 /**DataBroker**/
 	   	 getDataBrokerFile(dBean.getContainerBeanList(), dBean,byteArrayOutputStream.toString());
 	   	 logger.debug("DataBrokerFile");
@@ -364,7 +366,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		
 		int contPort=Integer.parseInt(dBean.getIncrementPort());
 		DockerInfo dockerBluePrintInfo=new DockerInfo();
-		
+
 		Iterator itr=deploymentKubeBeanList.iterator();
 		while(itr.hasNext()){
 			String portDockerInfo="";
@@ -380,8 +382,13 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 							|| depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
 						imagePort="";
 					}else{
-						imagePort=String.valueOf(contPort);
-						contPort++;
+						// imagePort=String.valueOf(contPort);
+						// contPort++;
+						// nginx-proxy gets configured to access the service
+						// with dynamic/increment port setup - nginx-proxy config needs to identify respective service port for the mapping
+						// instead of incremental port - using the same port number for all services 
+						// so that nginx-proxy can access it
+						imagePort = "8556";
 					}
 				}else{
 					imagePort=String.valueOf(contPort);
@@ -610,13 +617,14 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		selectorNode.put(DockerKubeConstants.APP_YML, modelNameYml);
 		specNode.set(DockerKubeConstants.SELECTOR_YML, selectorNode);
-		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.NODE_TYPE_PORT_YML);
+		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.CLUSTERIP_YML);
 		
 		ArrayNode portsArrayNode = specNode.arrayNode();
 		ObjectNode portsNode = objectMapper.createObjectNode();
 		
 		portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
-		portsNode.put(DockerKubeConstants.NODEPORT_YML, dBean.getSingleNodePort());
+		// nginx-proxy will serve as NodePort
+		// portsNode.put(DockerKubeConstants.NODEPORT_YML, dBean.getSingleNodePort());
 		portsNode.put(DockerKubeConstants.PORT_YML, dBean.getSingleModelPort());
 		portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBean.getSingleTargetPort());
 		portsArrayNode.add(portsNode);
@@ -1134,6 +1142,33 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			logger.debug("Done");
 	 
 		return baos.toByteArray();
-   }
+	 }
+	
+	public void getSolutionRevisionMap(DeploymentBean dBean) throws Exception {
+		logger.debug("getSolutionRevisionMap - start");
+		// ACUMOS-2782 - create map of solutionId and revisionId to export (deploy_env.sh)
+		Map<String, String> solRevMap = new HashMap<String, String>();
+		solRevMap.put(dBean.getSolutionId(), dBean.getSolutionRevisionId());
+		List<ContainerBean> containerBeans = dBean.getContainerBeanList();
+
+		if (containerBeans != null) {
+			CommonDataServiceRestClientImpl cmnDataService = getClient(dBean.getCmnDataUrl(), dBean.getCmnDataUser(), dBean.getCmnDataPd());
+			for (ContainerBean containerBean: containerBeans) {
+				String image = containerBean.getImage();
+				Map<String, String> imageMetaMap = CommonUtil.parseImageToken(image);
+				String solutionId = imageMetaMap.get(DockerKubeConstants.SOLUTION_ID);
+				String solVersion = imageMetaMap.get(DockerKubeConstants.VERSION);
+				List<MLPSolutionRevision> revisions = cmnDataService.getSolutionRevisions(solutionId);
+				for (MLPSolutionRevision revision: revisions) {
+					if (revision.getVersion().equals(solVersion)) {
+						solRevMap.put(solutionId, revision.getRevisionId());
+						break;
+					}
+				}
+			}		
+		}
+		dBean.setSolutionRevisionIdMap(solRevMap);
+		logger.debug("getSolutionRevisionMap - end");
+	}
 
 }
