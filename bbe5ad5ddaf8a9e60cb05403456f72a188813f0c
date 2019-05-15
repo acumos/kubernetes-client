@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d94b3939_68ed5ead",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 3
+      },
+      "lineNbr": 361,
+      "author": {
+        "id": 290
+      },
+      "writtenOn": "2019-05-15T14:53:55Z",
+      "side": 1,
+      "message": "source deploy_env.sh here",
+      "revId": "bbe5ad5ddaf8a9e60cb05403456f72a188813f0c",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    }
+  ]
+}
