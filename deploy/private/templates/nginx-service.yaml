@@ -32,8 +32,9 @@ metadata:
 spec:
   selector:
     app: nginx-proxy-<MODEL_NAME>
-  type: ClusterIP
+  type: NodePort
   ports:
   - name: nginx-proxy-api
+    nodePort: 30333
     port: 8550
     targetPort: 80

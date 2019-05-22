@@ -55,6 +55,9 @@ spec:
               mountPath: /etc/nginx/proxy.conf
               subPath: proxy.conf
             - name: nginx-proxy-config-volume-<MODEL_NAME>
+              mountPath: /etc/nginx/cors.conf
+              subPath: cors.conf
+            - name: nginx-proxy-config-volume-<MODEL_NAME>
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
             - name: nginx-proxy-volume-<MODEL_NAME>

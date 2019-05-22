@@ -603,13 +603,14 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		selectorNode.put(DockerKubeConstants.APP_YML, DockerKubeConstants.MYMODEL_YML);
 		specNode.set(DockerKubeConstants.SELECTOR_YML, selectorNode);
-		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.NODE_TYPE_PORT_YML);
+		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.CLUSTERIP_YML);
 		
 		ArrayNode portsArrayNode = specNode.arrayNode();
 		ObjectNode portsNode = objectMapper.createObjectNode();
 		
 		portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
-		portsNode.put(DockerKubeConstants.NODEPORT_YML, dBean.getSingleNodePort());
+		// nginx-proxy will serve as NodePort
+		// portsNode.put(DockerKubeConstants.NODEPORT_YML, dBean.getSingleNodePort());
 		portsNode.put(DockerKubeConstants.PORT_YML, dBean.getSingleModelPort());
 		portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBean.getSingleTargetPort());
 		portsArrayNode.add(portsNode);
