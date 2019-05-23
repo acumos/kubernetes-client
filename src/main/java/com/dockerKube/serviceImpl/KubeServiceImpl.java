@@ -380,8 +380,13 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 							|| depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
 						imagePort="";
 					}else{
-						imagePort=String.valueOf(contPort);
-						contPort++;
+						// imagePort=String.valueOf(contPort);
+						// contPort++;
+						// nginx-proxy gets configured to access the service
+						// with dynamic/increment port setup - nginx-proxy config needs to identify respective service port for the mapping
+						// instead of incremental port - using the same port number for all services 
+						// so that nginx-proxy can access it
+						imagePort = "8556";
 					}
 				}else{
 					imagePort=String.valueOf(contPort);
@@ -603,13 +608,14 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		selectorNode.put(DockerKubeConstants.APP_YML, DockerKubeConstants.MYMODEL_YML);
 		specNode.set(DockerKubeConstants.SELECTOR_YML, selectorNode);
-		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.NODE_TYPE_PORT_YML);
+		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.CLUSTERIP_YML);
 		
 		ArrayNode portsArrayNode = specNode.arrayNode();
 		ObjectNode portsNode = objectMapper.createObjectNode();
 		
 		portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
-		portsNode.put(DockerKubeConstants.NODEPORT_YML, dBean.getSingleNodePort());
+		// nginx-proxy will serve as NodePort
+		// portsNode.put(DockerKubeConstants.NODEPORT_YML, dBean.getSingleNodePort());
 		portsNode.put(DockerKubeConstants.PORT_YML, dBean.getSingleModelPort());
 		portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBean.getSingleTargetPort());
 		portsArrayNode.add(portsNode);

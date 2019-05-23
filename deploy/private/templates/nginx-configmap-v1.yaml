@@ -43,6 +43,24 @@ data:
     proxy_set_header X-Forwarded-Proto  $scheme;
     proxy_set_header X-Forwarded-Host   $host;
     proxy_set_header X-Forwarded-Port   $server_port;
+    # Used to correlate logs from model runner
+    proxy_set_header X-Request-ID       $request_id;
+  cors.conf: |
+    add_header 'Access-Control-Allow-Origin' '*';
+    add_header 'Access-Control-Allow_Credentials' 'true';
+    add_header 'Access-Control-Allow-Headers' 'Authorization,Accept,Origin,DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range';
+    add_header 'Access-Control-Allow-Methods' 'GET,POST,OPTIONS,PUT,DELETE,PATCH';
+ 
+    if ($request_method = 'OPTIONS') {
+      add_header 'Access-Control-Allow-Origin' '*';
+      add_header 'Access-Control-Allow_Credentials' 'true';
+      add_header 'Access-Control-Allow-Headers' 'Authorization,Accept,Origin,DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range';
+      add_header 'Access-Control-Allow-Methods' 'GET,POST,OPTIONS,PUT,DELETE,PATCH';
+      add_header 'Access-Control-Max-Age' 1728000;
+      add_header 'Content-Type' 'text/plain charset=UTF-8';
+      add_header 'Content-Length' 0;
+      return 204;
+    }
   nginx.conf: |
     user www-data;
     pid /run/nginx.pid;
@@ -74,15 +92,15 @@ data:
                         ' "request": { "scheme": "$scheme", "length": $request_length }, '
                         ' "response": { "status": "$status", "bytesSent": $body_bytes_sent, "time": $request_time } '
                         '}';
-      access_log /var/log/nginx/<NAMESPACE>/access-<MODEL_NAME>.log acumos;
-      error_log /var/log/nginx/<NAMESPACE>/error-<MODEL_NAME>.log warn;
+      access_log /var/log/nginx/<NAMESPACE>/model-usage-<SOLUTION_ID>.log acumos;
+      error_log /var/log/nginx/<NAMESPACE>/error-<SOLUTION_ID>.log warn;
 
       server {
-        server_name <MODEL_NAME>;
+        server_name nginx-proxy-<MODEL_NAME>;
 
         # reverse proxy
         location / {
-          proxy_pass http://<MODEL_NAME>:3330/;
+          proxy_pass http://<MODEL_NAME>:8556/;
           include /etc/nginx/proxy.conf;
         }
       }
