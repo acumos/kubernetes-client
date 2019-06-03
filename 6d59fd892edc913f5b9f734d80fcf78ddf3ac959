@@ -189,6 +189,30 @@
     },
     {
       "key": {
+        "uuid": "66e6a4e1_ee7d0d51",
+        "filename": "deploy/private/deploy.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 93
+      },
+      "writtenOn": "2019-06-03T19:38:04Z",
+      "side": 1,
+      "message": "So does using the two path elements fix that, and why?",
+      "parentUuid": "2b606e21_8ac951a2",
+      "range": {
+        "startLine": 290,
+        "startChar": 0,
+        "endLine": 290,
+        "endChar": 44
+      },
+      "revId": "6d59fd892edc913f5b9f734d80fcf78ddf3ac959",
+      "serverId": "655300a2-7a56-4504-9153-881edd907bea",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "ec4f13c4_e39b4878",
         "filename": "deploy/private/deploy.sh",
         "patchSetId": 2
