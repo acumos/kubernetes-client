@@ -1,0 +1,7 @@
+Verified+1: Acumos Jobbuilder <acumos-jobbuilder@jenkins.acumos.org>
+Code-Review+2: Bryan Sullivan <blsaws@hotmail.com>
+Submitted-by: Bryan Sullivan <blsaws@hotmail.com>
+Submitted-at: Mon, 03 Jun 2019 19:38:06 +0000
+Reviewed-on: https://gerrit.acumos.org/r/c/kubernetes-client/+/4341
+Project: kubernetes-client
+Branch: refs/heads/master
