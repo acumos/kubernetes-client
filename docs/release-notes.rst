@@ -25,6 +25,12 @@ Kubernetes-Client Component
 ...........................
 
 ------------------------------
+Version 3.0.0, 19 September 2019
+------------------------------
+* update CDS 3.0.0 for Kubernetes-client (`ACUMOS-3448 <https://jira.acumos.org/browse/ACUMOS-3448>`_)
+
+
+------------------------------
 Version 2.0.11, 8 May 2019
 ------------------------------
 * Improve deploy.sh to use environment setup in 2.0.9
