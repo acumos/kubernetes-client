@@ -2,7 +2,7 @@
 # ===============LICENSE_START=======================================================
 # Acumos Apache-2.0
 # ===================================================================================
-# Copyright (C) 2018 AT&T Intellectual Property & Tech Mahindra. All rights reserved.
+# Copyright (C) 2018-2019 AT&T Intellectual Property & Tech Mahindra. All rights reserved.
 # ===================================================================================
 # This Acumos software file is distributed by AT&T and Tech Mahindra
 # under the Apache License, Version 2.0 (the "License");
@@ -21,20 +21,19 @@
 #. by deploy.sh
 #.
 #. Prerequisites:
-#. - test_model_prereqs.sh run by a user with sudo privileges
-#. - Via the Acumos platform, download a solution.zip deployment package for
-#.   a specific model, unzip the package into a folder, and enter that folder.
-#. - For simple models, also download the two artifacts below from the Acumos
-#.   portal into the same folder, and refer to them when calling test-model.sh
-#.   "model name".proto, e.g. "square-9.proto"
-#.   "TOSCAPROTOBUF-n.json" e.g. TOSCAPROTOBUF-9.json
-#. - Install the solution via deploy.sh (see the script for details)
+#. - Solution deployed via "Deploy to Local" or "Deploy to k8s" options
+#. - For simple models, download the .proto file for the model and put it into
+#.   the same folder as this script.
+#. - For complex models, download the solution.zip for the solution via the
+#.   "Deploy to local" option, and unpack it. It will contain the component
+#.   microservice details (.proto files) in a set of subfolders under
+#.   "microservice". Those .proto files and the blueprint.json for the solution
+#.   are used by this script.
 #. Usage:
-#. - bash test-model.sh "<input>" "<host>" [.proto] [.json]
+#. - bash test-model.sh "<input>" "<url>" [.proto]
 #.   input: quoted string of test data to pass to the model
-#.   host: host (name or IP address) where the model is deployed
+#.   url: URL for model data ingress
 #.   .proto: for a simple model, the filename for "model name".proto
-#.   .json: for a simple model, the filename "TOSCAPROTOBUF-n".json
 #.
 
 trap 'fail' ERR
@@ -83,34 +82,32 @@ function test_model() {
       lastpkg=$(grep package microservice/$lastms/model.proto | cut -d ' ' -f 2 | sed 's/;//')
       nextms=$(jq -r ".nodes[$node].operation_signature_list[0].connected_to[0].container_name" blueprint.json)
     done
-    port=$(kubectl get svc -n acumos | awk '/nginx-proxy-mc/{print $5}' | cut -d '/' -f 1 | cut -d ':' -f 2)
     set -x
     echo "$input" \
       | ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
           --proto_path=microservice/$firstms microservice/$firstms/model.proto \
-      | curl -s --request POST -H "Content-Type: application/vnd.google.protobuf" \
+      | curl -k -s --request POST -H "Content-Type: application/vnd.google.protobuf" \
           -H "Accept: application/vnd.google.protobuf" \
-          --data-binary @- http://$host:$port/model/methods/$firstop \
+          --data-binary @- $url/model/methods/$firstop \
       | ~/protoc/bin/protoc --decode $lastpkg.$lastmsg \
           --proto_path=microservice/$lastms microservice/$lastms/model.proto
     set +x
   else
     # Simple model
-    firstms=$(jq -r ".service.listOfOperations[0].operationName" $json)
-    firstop=$firstms
-    firstmsg=$(jq -r ".service.listOfOperations[0].listOfInputMessages[0].inputMessageName" $json)
-    firstpkg=$(jq -r ".packageName" $json)
+    firstms=$(awk '/rpc /{print $2}' $proto)
     lastms=$firstms
-    lastmsg=$(jq -r ".service.listOfOperations[0].listOfOutputMessages[0].outPutMessageName" $json)
+    firstop=$firstms
+    firstmsg=$(awk '/message /{print $2}' $proto | head -1)
+    lastmsg=$(awk '/message /{print $2}' $proto | tail -n1)
+    firstpkg=$(awk '/package /{print $2}' $proto | sed 's/;//')
     lastpkg=$firstpkg
-    port=$(kubectl get svc -n acumos | awk '/nginx-proxy/{print $5}' | cut -d '/' -f 1 | cut -d ':' -f 2)
     set -x
     echo "$input" \
       | ~/protoc/bin/protoc --encode=$firstpkg.$firstmsg \
           --proto_path=. $proto \
-      | curl -s --request POST -H "Content-Type: application/vnd.google.protobuf" \
+      | curl -k -s --request POST -H "Content-Type: application/vnd.google.protobuf" \
           -H "Accept: application/vnd.google.protobuf" \
-          --data-binary @- http://$host:$port/model/methods/$firstop \
+          --data-binary @- $url/model/methods/$firstop \
       | ~/protoc/bin/protoc --decode=$lastpkg.$lastmsg \
           --proto_path=. $proto
     set +x
@@ -118,9 +115,8 @@ function test_model() {
 }
 
 input="$1"
-host=$2
+url=$2
 proto=$3
-json=$4
 
 dist=$(grep --m 1 ID /etc/os-release | awk -F '=' '{print $2}' | sed 's/"//g')
 test_model
