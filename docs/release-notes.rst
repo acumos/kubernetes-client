@@ -25,6 +25,12 @@ Kubernetes-Client Component
 ...........................
 
 ------------------------------
+Version 3.0.2, 30 December 2019
+------------------------------
+* update acumos-azure-client, acumos-openstack-client,kubernetis-client and deployment-client for logging library 3.0.5(`ACUMOS-3880 <https://jira.acumos.org/browse/ACUMOS-3880>`_)
+
+
+------------------------------
 Version 3.0.1, 11 December 2019
 ------------------------------
 * update acumos-azure-client, acumos-openstack-client,kubernetis-client and deployment-client for cds 3.1.0 (`ACUMOS-3835 <https://jira.acumos.org/browse/ACUMOS-3835>`_)
