@@ -293,8 +293,9 @@
 					<!-- LF credentials are not supplied here -->
 					<images>
 						<image>
+							<!-- Prefix must be "acumos/" -->
 							<!-- Specify a tag to avoid default tag "latest" -->
-							<name>kubernetes-client:${project.version}</name>
+							<name>acumos/kubernetes-client:${project.version}</name>
 							<build>
 								<from>openjdk:8-jre-slim</from>
 								<tags>
