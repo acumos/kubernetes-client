@@ -1,0 +1,10 @@
+---
+distribution_type: container
+container_release_tag: 3.0.2
+container_pull_registry: nexus3.acumos.org:10004
+container_push_registry: nexus3.acumos.org:10002
+project: kubernetes-client
+ref: 719f56fdbb02613d40513d4bea751c36d0be33c5
+containers:
+        - name: kubernetes-client
+          version: 3.0.2
