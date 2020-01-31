@@ -23,6 +23,10 @@ Kubernetes Client Release Notes
 ...........................
 Kubernetes-Client Component
 ...........................
+------------------------------
+Version 3.0.3, 31 January 2020
+------------------------------
+* update acumos-azure-client, openstack-client,kubernetis-client and deployment-client for cds 3.1.1(`ACUMOS-3957 <https://jira.acumos.org/browse/ACUMOS-3957>`_)
 
 ------------------------------
 Version 3.0.2, 30 December 2019
