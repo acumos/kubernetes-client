@@ -44,7 +44,7 @@ function log() {
 
 function setup_prereqs() {
   if [[ "$dist" == "ubuntu" ]]; then
-    sudo apt install -y jq golang-go unzip
+    sudo apt-get --no-install-recommends install -y jq golang-go unzip
   else
     sudo yum install -y jq golang-go unzip
   fi
