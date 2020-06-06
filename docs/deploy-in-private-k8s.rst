@@ -1113,7 +1113,7 @@ The docker-proxy service can be manually installed by following these steps:
 
 .. code-block:: shell
 
-  git clone https://gerrit.acumos.org/r/system-integration
+  git clone --depth 1 https://gerrit.acumos.org/r/system-integration
   cd system-integration
 ..
 

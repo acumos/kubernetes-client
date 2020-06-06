@@ -28,7 +28,7 @@
 #.   a specific solution/revision, and unzip the package into a folder
 #. - In the same folder where you unzipped the solution.zip, clone the Acumos
 #.   kubernetes-client repo (this script refers to templates from that repo)
-#.     git clone https://gerrit.acumos.org/r/kubernetes-client
+#.     git clone --depth 1 https://gerrit.acumos.org/r/kubernetes-client
 #.   and apply any patches you need to test with, if desired
 #.
 #. Usage: run this script from the folder where you unpacked solution.zip
@@ -309,7 +309,7 @@ function gitclone_kubernetes_client() {
   if [ ! -d "./kubernetes-client" ]
   then
     log "Clone kubernetes repo"
-    git clone https://gerrit.acumos.org/r/kubernetes-client
+    git clone --depth 1 https://gerrit.acumos.org/r/kubernetes-client
   fi
 }
 
