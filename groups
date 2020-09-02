@@ -1,4 +1,5 @@
 # UUID                                                                              	Group Name
 #
+4272856d6392b45137a214a4546c81351f402873                                            	saml/acumos-gerrit-kubernetes-client-committers
 42f0c83244389e408b42fa668348002012ecba46                                            	GitHub Replication
 ldap:cn=acumos-gerrit-kubernetes-client-committers,ou=Groups,dc=freestandards,dc=org	ldap/acumos-gerrit-kubernetes-client-committers
