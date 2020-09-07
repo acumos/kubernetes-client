@@ -4,11 +4,11 @@ project_creation_date: '2018-08-06'
 project_category: ''
 lifecycle_state: 'Incubation'
 project_lead: &acumos_deployment_ptl
-    name: 'Bryan Sullivan'
-    email: 'bryan.sullivan@att.com'
-    id: 'blsaws'
-    company: 'ATT'
-    timezone: 'America/Los_Angeles'
+    name: 'Philippe Dooze'
+    email: 'philippe.dooze@orange.com'
+    id: 'philippdo'
+    company: 'Orange'
+    timezone: 'Europe/Paris'
 primary_contact: *acumos_deployment_ptl
 issue_tracking:
     type: 'jira'
