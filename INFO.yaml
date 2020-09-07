@@ -4,11 +4,11 @@ project_creation_date: '2018-08-06'
 project_category: ''
 lifecycle_state: 'Incubation'
 project_lead: &acumos_deployment_ptl
-    name: 'Bryan Sullivan'
-    email: 'bryan.sullivan@att.com'
-    id: 'blsaws'
-    company: 'ATT'
-    timezone: 'America/Los_Angeles'
+    name: 'Philippe Dooze'
+    email: 'philippe.dooze@orange.com'
+    id: 'philippdo'
+    company: 'Orange'
+    timezone: 'Europe/Paris'
 primary_contact: *acumos_deployment_ptl
 issue_tracking:
     type: 'jira'
@@ -16,7 +16,7 @@ issue_tracking:
     key: 'ACUMOS'
 mailing_list:
     type: 'groups.io'
-    url: 'https://lists.acumos.org'
+    url: 'https://lists.lfai.foundation/g/acumosai-modelmanagement/'
     tag: '<[deployment]>'
 realtime_discussion:
     type: 'irc'
@@ -24,24 +24,15 @@ realtime_discussion:
     channel: '#acumos'
 meetings:
     - type: 'zoom'
-      agenda: 'https://wiki.acumos.org/display/DEP'
+      agenda: 'https://lists.lfai.foundation/calendar'
       url: 'https://zoom.us/j/4906631713'
       server: 'n/a'
       channel: 'n/a'
-      repeats: 'weekly'
-      time: '11:00 ET'
+      repeats: 'weekly monday'
+      time: '08:30 am ET'
 repositories:
     - 'kubernetes-client'
 committers:
-    - name: 'Bryan Sullivan'
-      email: 'bryan.sullivan@att.com'
-      company: 'ATT'
-      id: 'blsaws'
-      timezone: 'America/Los_Angeles'
-    - name: 'Parichay Gupta'
-      email: 'pg0057291@techmahindra.com'
-      company: 'TechMahindra'
-      id: 'parichay12'
-      timezone: 'America/New_York'
+    - <<: *acumos_deployment_ptl
 tsc:
     approval: 'https://lists.acumos.org/g/tscgeneral'
