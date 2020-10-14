@@ -8,9 +8,9 @@
  * under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *  
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ * 
  * This file is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -66,18 +66,18 @@ import org.acumos.cds.domain.MLPCodeNamePair;
 
 @Service
 public class KubeServiceImpl implements KubeService  {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 	/**
 	    * getClient is used geeting connection from database
-	    * @param datasource 
-	    *           - dataSource for Model 
+	    * @param datasource
+	    *           - dataSource for Model
 	    * @param userName
-	    *           - userName for database 
+	    *           - userName for database
 	    * @param dataPd
 	    *           - dataPd for database
 	    * @return client
-	    *          - client object          
+	    *          - client object 
 	    */
 	public CommonDataServiceRestClientImpl getClient(String datasource,String userName,String dataPd) {
 		logger.debug("getClient start");
@@ -85,10 +85,10 @@ public class KubeServiceImpl implements KubeService  {
 		logger.debug("getClient End");
 		return client;
 	}
-	public byte[] singleSolutionDetails(DeploymentBean dBean,String imageTag,String singleModelPort)throws Exception{
+	public byte[] singleSolutionDetails(DeploymentBean dBean,String imageTag,String singleModelPort, String solutionToolKitType)throws Exception{
 		logger.debug("singleSolutionDetails start");
 		logger.debug("imageTag "+imageTag +" singleModelPort "+singleModelPort);
-		getSolutionRevisionMap(dBean);
+		getSolutionRevisionMap(dBean, solutionToolKitType);
 		byte[] solutionZip=null;
 		String solutionYaml=getSingleSolutionYMLFile(imageTag,singleModelPort,dBean);
 		dBean.setSolutionYml(solutionYaml);
@@ -97,13 +97,13 @@ public class KubeServiceImpl implements KubeService  {
 		logger.debug("singleSolutionDetails End");
 		return solutionZip;
 	}
-	public byte[] compositeSolutionDetails(DeploymentBean dBean)throws Exception{
+	public byte[] compositeSolutionDetails(DeploymentBean dBean, String solutionToolKitType)throws Exception{
 		logger.debug("compositeSolutionDetails start");
 		byte[] solutionZip=null;
 		List<ContainerBean> contList=null;
 		ParseJSON parseJson=new ParseJSON();
 		/**Blueprint.json**/
-	   	 ByteArrayOutputStream byteArrayOutputStream=getBluePrintNexus(dBean.getSolutionId(), dBean.getSolutionRevisionId(), dBean.getCmnDataUrl(), 
+	   	 ByteArrayOutputStream byteArrayOutputStream=getBluePrintNexus(dBean.getSolutionId(), dBean.getSolutionRevisionId(), dBean.getCmnDataUrl(),
 	   			dBean.getCmnDataUser(), dBean.getCmnDataPd(), dBean.getNexusUrl(), dBean.getNexusUserName(), dBean.getNexusPd());
 	   	 logger.debug("byteArrayOutputStream "+byteArrayOutputStream);
 	   	 dBean.setBluePrintjson(byteArrayOutputStream.toString());
@@ -113,7 +113,7 @@ public class KubeServiceImpl implements KubeService  {
 	   	 dBean.setContainerBeanList(contList);
 	   	 getprotoDetails(dBean.getContainerBeanList(),dBean);
 			 logger.debug("Proto Details");
-			 getSolutionRevisionMap(dBean);
+			 getSolutionRevisionMap(dBean, solutionToolKitType);
 	   	 /**DataBroker**/
 	   	 getDataBrokerFile(dBean.getContainerBeanList(), dBean,byteArrayOutputStream.toString());
 	   	 logger.debug("DataBrokerFile");
@@ -144,7 +144,7 @@ public class KubeServiceImpl implements KubeService  {
 				}
 			}
 		}
-		 
+
 		logger.debug("End getSingleImageData imageTag"+imageTag);
 		return imageTag;
 	}
@@ -162,9 +162,9 @@ public class KubeServiceImpl implements KubeService  {
 			logger.error("Error in get solution "+e.getMessage());
 			toolKitTypeCode="";
 		}
-		logger.debug("getSolution End toolKitTypeCode " +toolKitTypeCode);	
+		logger.debug("getSolution End toolKitTypeCode " +toolKitTypeCode);
 	  return toolKitTypeCode;
-	 }	
+	 }
 	/** nexusArtifactClient method is used to get connection from nexus
 	 * @param nexusUrl
 	 *             - url of nexus
@@ -192,7 +192,7 @@ public class KubeServiceImpl implements KubeService  {
 	 * @param revisionId
 	 *                - revisionId for model
 	 * @param datasource
-	 *               - datasource name  
+	 *               - datasource name
 	 * @param userName
 	 *                - userName for Database
 	 * @param dataPd
@@ -208,7 +208,7 @@ public class KubeServiceImpl implements KubeService  {
 	 * @return byteArrayOutputStream
 	 *                            - String return in for of byte
 	 */
-	
+
 	@Override
 	public ByteArrayOutputStream getBluePrintNexus(String solutionId, String revisionId,String datasource,String userName,String dataPd,
 			String nexusUrl,String nexusUserName,String nexusPd) throws  Exception{
@@ -233,12 +233,12 @@ public class KubeServiceImpl implements KubeService  {
 					if (null != nexusURI) {
 						NexusArtifactClient nexusArtifactClient=nexusArtifactClient(nexusUrl,nexusUserName,nexusPd);
 						byteArrayOutputStream = nexusArtifactClient.getArtifact(nexusURI);
-						
+
 					}
 				}
-			}	
-			logger.debug("getBluePrintNexus End byteArrayOutputStream "+byteArrayOutputStream);	
-		return byteArrayOutputStream;	
+			}
+			logger.debug("getBluePrintNexus End byteArrayOutputStream "+byteArrayOutputStream);
+		return byteArrayOutputStream;
 	  }
 	/** getNexusUrlFile method is used to get file from nexus
 	 * @param nexusUrl
@@ -253,7 +253,7 @@ public class KubeServiceImpl implements KubeService  {
 	 *              - exception for method
 	 * @return byteArrayOutputStream
 	 *                   - String return in for of byte
-	 */	
+	 */
 public ByteArrayOutputStream getNexusUrlFile(String nexusUrl, String nexusUserName,String nexusPassword,String nexusURI)throws Exception {
 		   logger.debug("getNexusUrlFile start");
 		    ByteArrayOutputStream byteArrayOutputStream=null;
@@ -264,7 +264,7 @@ public ByteArrayOutputStream getNexusUrlFile(String nexusUrl, String nexusUserNa
 			 logger.debug("getNexusUrlFile ");
 			return byteArrayOutputStream;
 }
-	
+
 
 /** getprotoDetails method is used to get probe details
  * @param contList
@@ -299,7 +299,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
  * @param dBean
  *            - Deployment bean obj
  * @param jsonString
- *              - Json String 
+ *              - Json String
  * @throws Exception
  *             - exception for method
  */
@@ -316,15 +316,15 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 						dBean.setDataBrokerJson(byteArrayOutputStream.toString());	
 					}else{
 						dataBrokerBean.setProtobufFile("");
-						dBean.setDataBrokerJson("");	
+						dBean.setDataBrokerJson("");
 					}
-					
+
 				 }
-				
+
 		  }
-	  
+
   }
-  /** getSolutionYMLFile method is used to get solution file 
+  /** getSolutionYMLFile method is used to get solution file
    * @param dBean
    *            - Deployment bean obj
    * @param jsonString
@@ -361,9 +361,9 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		depBlueprintBean.setImagePort(dBean.getBluePrintPort());
 		depBlueprintBean.setNodeType(DockerKubeConstants.BLUEPRINT_CONTAINER_NAME);
 		deploymentKubeBeanList.add(depBlueprintBean);
-		
-		
-		
+
+
+
 		int contPort=Integer.parseInt(dBean.getIncrementPort());
 		DockerInfo dockerBluePrintInfo=new DockerInfo();
 
@@ -374,11 +374,11 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 			if(depBen!=null && depBen.getContainerName()!=null && !"".equals(depBen.getContainerName())
 					        && depBen.getImage()!=null && !"".equals(depBen.getImage())
 					        && depBen.getNodeType()!=null && !"".equals(depBen.getNodeType())){
-				
+
 				String imagePort="";
 				if(depBen.getNodeType()!=null){
-					if(depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER) 
-							|| depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.DATABROKER_NAME) 
+					if(depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)
+							|| depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.DATABROKER_NAME)
 							|| depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
 						imagePort="";
 					}else{
@@ -386,7 +386,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 						// contPort++;
 						// nginx-proxy gets configured to access the service
 						// with dynamic/increment port setup - nginx-proxy config needs to identify respective service port for the mapping
-						// instead of incremental port - using the same port number for all services 
+						// instead of incremental port - using the same port number for all services
 						// so that nginx-proxy can access it
 						imagePort = "8556";
 					}
@@ -394,12 +394,12 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 					imagePort=String.valueOf(contPort);
 					contPort++;
 				}
-				
+
 				logger.debug("imagePort "+imagePort);
 				String serviceYml=getCompositeSolutionService(depBen.getContainerName(),imagePort,depBen.getNodeType(),dBean);
 				String deploymentYml=getCompositeSolutionDeployment(depBen.getImage(),depBen.getContainerName(),
 						imagePort,depBen.getNodeType(),dBean);
-				
+
 				if(depBen.getNodeType()!=null && depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 					portDockerInfo=dBean.getBluePrintPort();
 				}else if(depBen.getNodeType()!=null && depBen.getNodeType().equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
@@ -416,14 +416,14 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 				solutionYml=solutionYml+serviceYml;
 				solutionYml=solutionYml+deploymentYml;
 				logger.debug("solutionYml "+solutionYml);
-				
+
 				DockerInfoBean dockerInfoBean=new DockerInfoBean();
 				dockerInfoBean.setContainer(depBen.getContainerName());
 				dockerInfoBean.setIpAddress(depBen.getContainerName());
 				dockerInfoBean.setPort(portDockerInfo);
 				dockerInfoBeanList.add(dockerInfoBean);
 			}
-			
+
 		}
 		logger.debug("Final solutionYml "+solutionYml);
 		dBean.setSolutionYml(solutionYml);
@@ -442,7 +442,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		}
 	logger.debug("End getSolutionYMLFile");
   }
-  /** createCompositeSolutionZip method is used to get zip file 
+  /** createCompositeSolutionZip method is used to get zip file
    * @param dBean
    *           - Deployment bean obj
    * @return baos
@@ -451,7 +451,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
    *           - exception for method
    */
   public byte[] createCompositeSolutionZip(DeploymentBean dBean)throws Exception{
-	  
+
 	    byte[] buffer = new byte[1024];
 		ByteArrayOutputStream baos =null;
 		HashMap<String,ByteArrayOutputStream> hmap=new HashMap<String,ByteArrayOutputStream>();
@@ -465,7 +465,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 					 hmap.put(DockerKubeConstants.KUBE_K8S_SH, bOutput);
 					 logger.debug(DockerKubeConstants.KUBE_K8S_SH+" "+bOutput);
 				 }
-				 
+
 				 bOutput = new ByteArrayOutputStream(12);
 				 String deployFile=dBean.getFolderPath()+"/"+DockerKubeConstants.KUBE_DEPLOY_SH;
 				 String deployScript=util.getFileDetails(deployFile);
@@ -488,7 +488,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 					hmap.put(DockerKubeConstants.KUBE_BLUEPRINT_JSON, bOutput);
 					logger.debug(DockerKubeConstants.KUBE_BLUEPRINT_JSON+" "+bOutput);
 				}
-				
+
 				if(dBean.getDockerInfoJson()!=null && !"".equals(dBean.getDockerInfoJson())){
 					bOutput = new ByteArrayOutputStream(12);
 					bOutput.write(dBean.getDockerInfoJson().getBytes());
@@ -528,10 +528,10 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 						}
 					}
 				}
-				
-				
+
+
 			}
-			
+
 			baos= new ByteArrayOutputStream();
 			ZipOutputStream zos = new ZipOutputStream(baos);
 			Iterator it = hmap.entrySet().iterator();
@@ -539,7 +539,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 		        Map.Entry pair = (Map.Entry)it.next();
 		        String fileName=(String)pair.getKey();
 		        ByteArrayOutputStream ba=(ByteArrayOutputStream)pair.getValue();
-		        
+
 		        ZipEntry ze = new ZipEntry(fileName);
 				zos.putNextEntry(ze);
 				InputStream in = new ByteArrayInputStream(ba.toByteArray());
@@ -549,13 +549,13 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
 				}
 				in.close();
 		    }
-			
+
 			zos.closeEntry();
 			zos.close();
 	    	return baos.toByteArray();
   }
-  
-  /** getSingleSolutionYMLFile method is used to get yml file 
+
+  /** getSingleSolutionYMLFile method is used to get yml file
    * @param imageTag
    *              - image name for deployment
    * @param singleModelPort
@@ -563,7 +563,7 @@ public List<ContainerBean> getprotoDetails(List<ContainerBean> contList,Deployme
    * @param dBean
    *               - DeploymentBean
    * @return solutionYaml
-   *               - yml string 
+   *               - yml string
    * @throws Exception
    *              - exception for method
    */
@@ -581,7 +581,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		logger.debug("getSingleSolutionYMLFile End");
 		return solutionYaml;
   }
-/** getSingleSolutionService method is used to get service details 
+/** getSingleSolutionService method is used to get service details
  * @param modelPort
  *              - port of model
  * @param dBean
@@ -589,7 +589,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
  * @param modelName
  *           - modelName
  * @return serviceYml
- *              - yml string 
+ *              - yml string
  * @throws Exception
  *               - exception for method
  */
@@ -600,28 +600,28 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 	    YAMLMapper yamlMapper = new YAMLMapper(new YAMLFactory().configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true));
 	    ObjectNode apiRootNode = objectMapper.createObjectNode();
 	    apiRootNode.put(DockerKubeConstants.APIVERSION_YML,DockerKubeConstants.V_YML);
-	   	    
+
 	    /*ObjectNode kindDataNode = objectMapper.createObjectNode();
 	    kindDataNode.put(DockerKubeConstants.KIND_YML, DockerKubeConstants.SERVICE_YML);*/
 	    apiRootNode.put(DockerKubeConstants.KIND_YML, DockerKubeConstants.SERVICE_YML);
-		
+
 		String modelNameYml = (modelName != null) ? modelName : DockerKubeConstants.MYMODEL_YML;
 
 	  ObjectNode metadataNode = objectMapper.createObjectNode();
 		metadataNode.put(DockerKubeConstants.NAMESPACE_YML, DockerKubeConstants.ACUMOS_YML);
 		metadataNode.put(DockerKubeConstants.NAME_YML, modelNameYml);
 		apiRootNode.set(DockerKubeConstants.METADATA_YML, metadataNode);
-		
+
 		ObjectNode specNode = objectMapper.createObjectNode();
-		
+
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		selectorNode.put(DockerKubeConstants.APP_YML, modelNameYml);
 		specNode.set(DockerKubeConstants.SELECTOR_YML, selectorNode);
 		specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.CLUSTERIP_YML);
-		
+
 		ArrayNode portsArrayNode = specNode.arrayNode();
 		ObjectNode portsNode = objectMapper.createObjectNode();
-		
+
 		portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
 		// nginx-proxy will serve as NodePort
 		// portsNode.put(DockerKubeConstants.NODEPORT_YML, dBean.getSingleNodePort());
@@ -629,18 +629,18 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBean.getSingleTargetPort());
 		portsArrayNode.add(portsNode);
 		specNode.set(DockerKubeConstants.PORTS_YML, portsArrayNode);
-		
+
 		apiRootNode.set(DockerKubeConstants.SPEC_YML, specNode);
-		
+
 		serviceYml = yamlMapper.writeValueAsString(apiRootNode);
 		 logger.debug("solutionDeployment "+serviceYml);
 	  return serviceYml;
   }
-  /** getSingleSolutionDeployment method is used to get deployment details 
+  /** getSingleSolutionDeployment method is used to get deployment details
    * @param imageTag
    *             - image name
    * @param dBean
-   *             - DeploymentBean            
+   *             - DeploymentBean
    * @param modelName
    *           - modelName
    * @return modelPort
@@ -656,120 +656,120 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 	    ObjectNode kindRootNode = objectMapper.createObjectNode();
 	    kindRootNode.put(DockerKubeConstants.APIVERSION_DEP_YML, DockerKubeConstants.APPS_V1_DEP_YML);
 	    kindRootNode.put(DockerKubeConstants.KIND_DEP_YML, DockerKubeConstants.DEPLOYMENT_DEP_YML);
-	    
+
 	    ObjectNode metadataNode = objectMapper.createObjectNode();
 		metadataNode.put(DockerKubeConstants.NAMESPACE_DEP_YML, DockerKubeConstants.ACUMOS_DEP_YML);
 		String modelNameYml = (modelName != null) ? modelName : DockerKubeConstants.MYMODEL_DEP_YML;
 		metadataNode.put(DockerKubeConstants.NAME_DEP_YML, modelNameYml);
-		
+
 		ObjectNode labelsNode = objectMapper.createObjectNode();
 		labelsNode.put(DockerKubeConstants.APP_DEP_YML, modelNameYml);
 		metadataNode.put(DockerKubeConstants.LABELS_DEP_YML, labelsNode);
-		
+
 		kindRootNode.set(DockerKubeConstants.METADATA_DEP_YML, metadataNode);
-		
+
 		ObjectNode specNode = objectMapper.createObjectNode();
 		specNode.put(DockerKubeConstants.REPLICAS_DEP_YML, 1);
-		
+
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		ObjectNode matchLabelsNode = objectMapper.createObjectNode();
 		matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, modelNameYml);
 		selectorNode.set(DockerKubeConstants.MATCHLABELS_DEP_YML, matchLabelsNode);
-		
+
 		specNode.set(DockerKubeConstants.SELECTOR_DEP_YML, selectorNode);
-	    
+
 		ObjectNode templateNode = objectMapper.createObjectNode();
 		ObjectNode metadataTemplateNode = objectMapper.createObjectNode();
 		ObjectNode labelsTemplateNode = objectMapper.createObjectNode();
 		labelsTemplateNode.put(DockerKubeConstants.APP_DEP_YML, modelNameYml);
 		metadataTemplateNode.set(DockerKubeConstants.LABELS_DEP_YML, labelsTemplateNode);
-		
-		
+
+
 		ObjectNode specTempNode = objectMapper.createObjectNode();
 		ArrayNode containerArrayNode = templateNode.arrayNode();
 		ObjectNode containerNode  = objectMapper.createObjectNode();
 		containerNode.put(DockerKubeConstants.NAME_DEP_YML, modelNameYml);
-		containerNode.put(DockerKubeConstants.IMAGE_DEP_YML, 
+		containerNode.put(DockerKubeConstants.IMAGE_DEP_YML,
 				cutil.getProxyImageName(imageTag, dBean.getDockerProxyHost(), dBean.getDockerProxyPort()));
-		
+
 		ArrayNode portsArrayNode = containerNode.arrayNode();
 		ObjectNode portsNode  = objectMapper.createObjectNode();
 		portsNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
 		portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getSingleTargetPort());
-		
+
 		portsArrayNode.add(portsNode);
 		containerArrayNode.add(containerNode);
 		containerNode.set(DockerKubeConstants.PORTS_DEP_YML, portsArrayNode);
-		
+
 		ObjectNode imagePullSecretsNode = objectMapper.createObjectNode();
 		ArrayNode imageSecretArrayNode = containerNode.arrayNode();
 		imagePullSecretsNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.ACUMOS_REGISTRY_DEP_YML);
 		imageSecretArrayNode.add(imagePullSecretsNode);
 		specTempNode.set(DockerKubeConstants.IMAGEPULLSECRETS_DEP_YML, imageSecretArrayNode);
-		
+
 		specTempNode.set(DockerKubeConstants.CONTAINERS_DEP_YML, containerArrayNode);
-		
+
 		templateNode.set(DockerKubeConstants.METADATA_DEP_YML, metadataTemplateNode);
 		templateNode.set(DockerKubeConstants.SPEC_DEP_YML, specTempNode);
 		specNode.set(DockerKubeConstants.TEMPLATE_DEP_YML, templateNode);
-		
+
 		kindRootNode.put(DockerKubeConstants.SPEC_DEP_YML, specNode);
-		
+
 		String solutionDeployment = yamlMapper.writeValueAsString(kindRootNode);
 		logger.debug("solutionDeployment "+solutionDeployment);
-		
-	    
+
+
 	  return solutionDeployment;
   }
-  
- 
-  /** getCompositeSolutionService method is used to get service details 
+
+
+  /** getCompositeSolutionService method is used to get service details
    * @param containerName
    *             - Container name
    * @param imagePort
    *              - image port
-   * @param nodeType 
+   * @param nodeType
    *            - type of node
    * @param dBen
-   *            - DeploymentBean            
+   *            - DeploymentBean
    * @return serviceYml
-   *               - yml string 
+   *               - yml string
    * @throws Exception
    *               - exception for method
    */
   public String getCompositeSolutionService(String containerName,String imagePort,String nodeType,DeploymentBean dBen)throws Exception{
 	  logger.debug("getSingleSolutionService Start");
 	    String serviceYml="";
-	    
+
 	    ObjectMapper objectMapper = new ObjectMapper();
 	    YAMLMapper yamlMapper = new YAMLMapper(new YAMLFactory().configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true));
 	    ObjectNode apiRootNode = objectMapper.createObjectNode();
 	    apiRootNode.put(DockerKubeConstants.APIVERSION_YML, DockerKubeConstants.V_YML);
 	    apiRootNode.put(DockerKubeConstants.KIND_YML, DockerKubeConstants.SERVICE_YML);
-	    
+
 	    ObjectNode metadataNode = objectMapper.createObjectNode();
 		metadataNode.put(DockerKubeConstants.NAMESPACE_YML, DockerKubeConstants.ACUMOS_YML);
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 		    metadataNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
-		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){  
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
 			metadataNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.DATABROKER_NAME_YML);
 		}else{
 			metadataNode.put(DockerKubeConstants.NAME_YML, containerName);
 		}
 		apiRootNode.set(DockerKubeConstants.METADATA_YML, metadataNode);
-		
+
 		ObjectNode specNode = objectMapper.createObjectNode();
-		
+
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 		   selectorNode.put(DockerKubeConstants.APP_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
-		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){ 
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
 			selectorNode.put(DockerKubeConstants.APP_YML, DockerKubeConstants.DATABROKER_NAME_YML);
 		}else{
 			selectorNode.put(DockerKubeConstants.APP_YML, containerName);
 		}
 		specNode.set(DockerKubeConstants.SELECTOR_YML, selectorNode);
-		if(nodeType!=null && (nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER) 
+		if(nodeType!=null && (nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)
 				|| nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER) || nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME))){
 		  specNode.put(DockerKubeConstants.TYPE_YML, DockerKubeConstants.NODE_TYPE_PORT_YML);
 		}else{
@@ -777,26 +777,26 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		}
 		ArrayNode portsArrayNode = specNode.arrayNode();
 		ObjectNode portsNode = objectMapper.createObjectNode();
-		
+
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 		  portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.NAME_MCAPI_YML);
 		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){ 
 			portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.NAME_DATABROKER_YML);
-		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){ 
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
 			//NA
 		}else{
 			portsNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.PROTOBUF_API_DEP_YML);
 		}
-		
+
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 		 portsNode.put(DockerKubeConstants.NODEPORT_YML, dBen.getBluePrintNodePort());
 		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
 			portsNode.put(DockerKubeConstants.NODEPORT_YML, dBen.getDataBrokerNodePort());
-		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){	
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
 			portsNode.put(DockerKubeConstants.NODEPORT_YML, dBen.getProbeNodePort());
 		}
-		
-		
+
+
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 			portsNode.put(DockerKubeConstants.PORT_YML, dBen.getBluePrintPort());
 		    portsNode.put(DockerKubeConstants.TARGETPORT_YML, dBen.getBluePrintPort());
@@ -817,7 +817,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		logger.debug("solutionDeployment "+serviceYml);
 	  return serviceYml;
   }
-  /** getCompositeSolutionDeployment method is used to get service details 
+  /** getCompositeSolutionDeployment method is used to get service details
    * @param imageTag
    *             - image tag name
    * @param containerName
@@ -827,7 +827,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
    * @param nodeType
    *              - node type of model
    *  @param dBean
-   *               - DeploymentBean            
+   *               - DeploymentBean
    * @return solutionDeployment
    *             - obj of solution deployment
    * @throws Exception
@@ -841,49 +841,49 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 	    ObjectNode kindRootNode = objectMapper.createObjectNode();
 	    kindRootNode.put(DockerKubeConstants.APIVERSION_DEP_YML, DockerKubeConstants.APPS_V1_DEP_YML);
 	    kindRootNode.put(DockerKubeConstants.KIND_DEP_YML, DockerKubeConstants.DEPLOYMENT_DEP_YML);
-	    
-	    
+
+
 	    ObjectNode metadataNode = objectMapper.createObjectNode();
 		metadataNode.put(DockerKubeConstants.NAMESPACE_DEP_YML, DockerKubeConstants.ACUMOS_DEP_YML);
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 			metadataNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
-		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){  
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
 			metadataNode.put(DockerKubeConstants.NAME_YML, DockerKubeConstants.DATABROKER_NAME_YML);
 		}else{
 			metadataNode.put(DockerKubeConstants.NAME_DEP_YML, containerName);
 		}
-		
-		
+
+
 		ObjectNode labelsNode = objectMapper.createObjectNode();
-		
+
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 			labelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
-		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){  
-			labelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.DATABROKER_NAME_YML);	
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
+			labelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.DATABROKER_NAME_YML);
 		}else{
 			labelsNode.put(DockerKubeConstants.APP_DEP_YML, containerName);
 		}
 		metadataNode.put(DockerKubeConstants.LABELS_DEP_YML, labelsNode);
-		
+
 		kindRootNode.set(DockerKubeConstants.METADATA_DEP_YML, metadataNode);
-		
+
 		ObjectNode specNode = objectMapper.createObjectNode();
 		specNode.put(DockerKubeConstants.REPLICAS_DEP_YML, 1);
-		
+
 		ObjectNode selectorNode = objectMapper.createObjectNode();
 		ObjectNode matchLabelsNode = objectMapper.createObjectNode();
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 			matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.BLUEPRINT_MODELCONNECTOR_NAME);
-		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){ 
+		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
 			matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, DockerKubeConstants.DATABROKER_NAME_YML);
 		}else{
 			matchLabelsNode.put(DockerKubeConstants.APP_DEP_YML, containerName);
 		}
-		
+
 		selectorNode.set(DockerKubeConstants.MATCHLABELS_DEP_YML, matchLabelsNode);
-		
+
 		specNode.set(DockerKubeConstants.SELECTOR_DEP_YML, selectorNode);
-	    
+
 		ObjectNode templateNode = objectMapper.createObjectNode();
 		ObjectNode metadataTemplateNode = objectMapper.createObjectNode();
 		ObjectNode labelsTemplateNode = objectMapper.createObjectNode();
@@ -894,10 +894,10 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		}else{
 			labelsTemplateNode.put(DockerKubeConstants.APP_DEP_YML, containerName);
 		}
-		
+
 		metadataTemplateNode.set(DockerKubeConstants.LABELS_DEP_YML, labelsTemplateNode);
-		
-		
+
+
 		ObjectNode specTempNode = objectMapper.createObjectNode();
 		ArrayNode containerArrayNode = templateNode.arrayNode();
 		ObjectNode containerNode  = objectMapper.createObjectNode();
@@ -909,7 +909,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		}else{
 			containerNode.put(DockerKubeConstants.NAME_DEP_YML, containerName);
 		}
-		
+
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
 			containerNode.put(DockerKubeConstants.IMAGE_DEP_YML,imageTag);
 		}else if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATA_BROKER)){
@@ -921,7 +921,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			containerNode.put(DockerKubeConstants.IMAGE_DEP_YML, 
 					cutil.getProxyImageName(imageTag, dBean.getDockerProxyHost(), dBean.getDockerProxyPort()));
 		}
-		
+
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
 			ArrayNode envArrayNode = containerNode.arrayNode();
 			ObjectNode envNode  = objectMapper.createObjectNode();
@@ -934,8 +934,8 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			envArrayNode.add(envNodeExternal);
 			containerNode.set(DockerKubeConstants.ENV, envArrayNode);
 		}
-		
-		
+
+
 		ArrayNode portsArrayNode = containerNode.arrayNode();
 		ObjectNode portsNode  = objectMapper.createObjectNode();
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
@@ -956,7 +956,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		}else{
 			portsNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getMlTargetPort());
 		}
-		
+
 		portsArrayNode.add(portsNode);
 		/*if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
 			ObjectNode portsNode2  = objectMapper.createObjectNode();
@@ -964,7 +964,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			portsNode2.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getProbeApiPort());
 			portsArrayNode.add(portsNode2);
 		}*/
-		
+
 		containerNode.set(DockerKubeConstants.PORTS_DEP_YML, portsArrayNode);
 		//for Nginx
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
@@ -976,7 +976,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			portSchemaNode.put(DockerKubeConstants.CONTAINERPORT_DEP_YML, dBean.getProbeSchemaPort());
 			portSchemaArrayNode.add(portSchemaNode);
 			containerNodeNginx.set(DockerKubeConstants.PORTS_DEP_YML, portSchemaArrayNode);
-			
+
 		}
 		//BLUEPRINT or DataBroker
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.BLUEPRINT_CONTAINER)){
@@ -1004,8 +1004,8 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			containerNodeNginx.set(DockerKubeConstants.VOLUMEMOUNTS_DEP_YML, volmeMountArrayNode);
 		}
 		//Finish
-		
-		
+
+
 		ObjectNode imagePullSecretsNode = objectMapper.createObjectNode();
 		ArrayNode imageSecretArrayNode = containerNode.arrayNode();
 		imagePullSecretsNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.ACUMOS_REGISTRY_DEP_YML);
@@ -1029,7 +1029,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			specTempNode.set(DockerKubeConstants.VOLUMES_DEP_YML, volumeArrNode);
 		}
 		if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.DATABROKER_NAME)){
-			
+
 			ArrayNode volumeArrNode = templateNode.arrayNode();
 			ObjectNode volumeNode  = objectMapper.createObjectNode();
 			volumeNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.DATABROKER_LOGNAME);
@@ -1041,7 +1041,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			specTempNode.set(DockerKubeConstants.VOLUMES_DEP_YML, volumeArrNode);
 		}
        if(nodeType!=null && nodeType.equalsIgnoreCase(DockerKubeConstants.PROBE_CONTAINER_NAME)){
-			
+
 			ArrayNode volumeArrNode = templateNode.arrayNode();
 			ObjectNode volumeNode  = objectMapper.createObjectNode();
 			volumeNode.put(DockerKubeConstants.NAME_DEP_YML, DockerKubeConstants.VOLUME_PROTO_YML);
@@ -1053,30 +1053,30 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			specTempNode.set(DockerKubeConstants.VOLUMES_DEP_YML, volumeArrNode);
 		}
 		//Finish
-		
+
 		templateNode.set(DockerKubeConstants.METADATA_DEP_YML, metadataTemplateNode);
 		templateNode.set(DockerKubeConstants.SPEC_DEP_YML, specTempNode);
 		specNode.set(DockerKubeConstants.TEMPLATE_DEP_YML, templateNode);
-		
+
 		kindRootNode.put(DockerKubeConstants.SPEC_DEP_YML, specNode);
-		
+
 		String solutionDeployment = yamlMapper.writeValueAsString(kindRootNode);
 		logger.debug("before "+solutionDeployment);
 		solutionDeployment=solutionDeployment.replace("'", "");
 		logger.debug("After "+solutionDeployment);
-	    
+
 	  return solutionDeployment;
 }
-  /** createSingleSolutionZip method is used to get create zip 
+  /** createSingleSolutionZip method is used to get create zip
    * @param dBean
-   *            - object of deployment bean 
+   *            - object of deployment bean
    * @return baos
    *           - byte string
    * @throws Exception
    *             - exception for method
    */
   public byte[] createSingleSolutionZip(DeploymentBean dBean)throws Exception{
-	  
+
 	    byte[] buffer = new byte[1024];
 		ByteArrayOutputStream baos =null;
 		HashMap<String,ByteArrayOutputStream> hmap=new HashMap<String,ByteArrayOutputStream>();
@@ -1091,7 +1091,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 						 hmap.put(DockerKubeConstants.KUBE_K8S_SH, bOutput);
 						 logger.debug(DockerKubeConstants.KUBE_K8S_SH+" "+bOutput);
 					 }
-					 
+
 					 bOutput = new ByteArrayOutputStream(12);
 					 String deployFile=dBean.getFolderPath()+"/"+DockerKubeConstants.KUBE_DEPLOY_SH;
 					 String deployScript=util.getFileDetails(deployFile);
@@ -1106,19 +1106,19 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 						 bOutput.write(deployEnvScript.getBytes());
 						 hmap.put(DockerKubeConstants.KUBE_DEPLOY_ENV_SH, bOutput);
 						 logger.debug(DockerKubeConstants.KUBE_DEPLOY_ENV_SH+" "+bOutput);
-					 } 
-				
-				
-				
+					 }
+
+
+
 				if(dBean.getSolutionYml()!=null && !"".equals(dBean.getSolutionYml())){
 					bOutput = new ByteArrayOutputStream(12);
 					bOutput.write(dBean.getSolutionYml().getBytes());
 					hmap.put(DockerKubeConstants.KUBE_SOLUTION_YML, bOutput);
 					logger.debug(DockerKubeConstants.KUBE_SOLUTION_YML+"  "+bOutput);
 				}
-				
+
 			}
-			
+
 			baos= new ByteArrayOutputStream();
 			ZipOutputStream zos = new ZipOutputStream(baos);
 			Iterator it = hmap.entrySet().iterator();
@@ -1126,7 +1126,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		        Map.Entry pair = (Map.Entry)it.next();
 		        String fileName=(String)pair.getKey();
 		        ByteArrayOutputStream ba=(ByteArrayOutputStream)pair.getValue();
-		        
+
 		        ZipEntry ze = new ZipEntry(fileName);
 				zos.putNextEntry(ze);
 				InputStream in = new ByteArrayInputStream(ba.toByteArray());
@@ -1136,15 +1136,15 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 				}
 				in.close();
 		    }
-			
+
 			zos.closeEntry();
 			zos.close();
 			logger.debug("Done");
-	 
+
 		return baos.toByteArray();
 	 }
-	
-	public void getSolutionRevisionMap(DeploymentBean dBean) throws Exception {
+
+	public void getSolutionRevisionMap(DeploymentBean dBean, String solutionToolKitType) throws Exception {
 		logger.debug("getSolutionRevisionMap - start");
 		// ACUMOS-2782 - create map of solutionId and revisionId to export (deploy_env.sh)
 		Map<String, String> solRevMap = new HashMap<String, String>();
@@ -1155,9 +1155,16 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			CommonDataServiceRestClientImpl cmnDataService = getClient(dBean.getCmnDataUrl(), dBean.getCmnDataUser(), dBean.getCmnDataPd());
 			for (ContainerBean containerBean: containerBeans) {
 				String image = containerBean.getImage();
-				Map<String, String> imageMetaMap = CommonUtil.parseImageToken(image);
-				String solutionId = imageMetaMap.get(DockerKubeConstants.SOLUTION_ID);
-				String solVersion = imageMetaMap.get(DockerKubeConstants.VERSION);
+				String solutionId  = null;
+				String solVersion = null;
+				if ("CP".equalsIgnoreCase(solutionToolKitType)) {
+					solutionId = dBean.getSolutionId();
+					solVersion = getSolutionVersion(dBean.getCmnDataUrl(), dBean.getCmnDataUser(), dBean.getCmnDataPd(), solutionId, dBean.getSolutionRevisionId());
+				}else {
+					Map<String, String> imageMetaMap = CommonUtil.parseImageToken(image);
+					solutionId = imageMetaMap.get(DockerKubeConstants.SOLUTION_ID);
+					solVersion = imageMetaMap.get(DockerKubeConstants.VERSION);
+				}
 				List<MLPSolutionRevision> revisions = cmnDataService.getSolutionRevisions(solutionId);
 				for (MLPSolutionRevision revision: revisions) {
 					if (revision.getVersion().equals(solVersion)) {
@@ -1165,10 +1172,26 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 						break;
 					}
 				}
-			}		
+			}
 		}
 		dBean.setSolutionRevisionIdMap(solRevMap);
 		logger.debug("getSolutionRevisionMap - end");
+	}
+
+	public String getSolutionVersion(String dataSourceUrl,String dataSourceUser,String dataSourcePd,
+			String solutionId, String solutionRevisionId) throws Exception {
+		logger.debug("getSolutionVersion Begin");
+		MLPSolutionRevision mlpSolutionrevision = null;
+		try {
+			CommonDataServiceRestClientImpl client = getClient(dataSourceUrl, dataSourceUser, dataSourcePd);
+			mlpSolutionrevision = client.getSolutionRevision(solutionId, solutionRevisionId);
+			logger.debug("Solution version " + mlpSolutionrevision.getVersion());
+		} catch (Exception e) {
+			logger.error("Exception in getSolutionVersion", e);
+			throw e;
+		}
+		logger.debug("getSolutionVersion end");
+		return mlpSolutionrevision.getVersion();
 	}
 
 }
