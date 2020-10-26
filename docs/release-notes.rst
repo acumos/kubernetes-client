@@ -23,6 +23,12 @@ Kubernetes Client Release Notes
 ...........................
 Kubernetes-Client Component
 ...........................
+
+------------------------------
+Version 3.0.4, 26 October 2020
+------------------------------
+* MicroService Generation for AcuCompose Model (`ACUMOS-3896 <https://jira.acumos.org/browse/ACUMOS-3896>`_)
+
 ------------------------------
 Version 3.0.3, 31 January 2020
 ------------------------------
