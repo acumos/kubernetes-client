@@ -85,10 +85,10 @@ public class KubeServiceImpl implements KubeService  {
 		logger.debug("getClient End");
 		return client;
 	}
-	public byte[] singleSolutionDetails(DeploymentBean dBean,String imageTag,String singleModelPort)throws Exception{
+	public byte[] singleSolutionDetails(DeploymentBean dBean,String imageTag,String singleModelPort,String solutionToolKitType)throws Exception{
 		logger.debug("singleSolutionDetails start");
 		logger.debug("imageTag "+imageTag +" singleModelPort "+singleModelPort);
-		getSolutionRevisionMap(dBean);
+		getSolutionRevisionMap(dBean, solutionToolKitType);
 		byte[] solutionZip=null;
 		String solutionYaml=getSingleSolutionYMLFile(imageTag,singleModelPort,dBean);
 		dBean.setSolutionYml(solutionYaml);
@@ -97,7 +97,7 @@ public class KubeServiceImpl implements KubeService  {
 		logger.debug("singleSolutionDetails End");
 		return solutionZip;
 	}
-	public byte[] compositeSolutionDetails(DeploymentBean dBean)throws Exception{
+	public byte[] compositeSolutionDetails(DeploymentBean dBean, String solutionToolKitType)throws Exception{
 		logger.debug("compositeSolutionDetails start");
 		byte[] solutionZip=null;
 		List<ContainerBean> contList=null;
@@ -113,7 +113,7 @@ public class KubeServiceImpl implements KubeService  {
 	   	 dBean.setContainerBeanList(contList);
 	   	 getprotoDetails(dBean.getContainerBeanList(),dBean);
 			 logger.debug("Proto Details");
-			 getSolutionRevisionMap(dBean);
+			 getSolutionRevisionMap(dBean, solutionToolKitType);
 	   	 /**DataBroker**/
 	   	 getDataBrokerFile(dBean.getContainerBeanList(), dBean,byteArrayOutputStream.toString());
 	   	 logger.debug("DataBrokerFile");
@@ -1144,7 +1144,7 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		return baos.toByteArray();
 	 }
 	
-	public void getSolutionRevisionMap(DeploymentBean dBean) throws Exception {
+	public void getSolutionRevisionMap(DeploymentBean dBean, String solutionToolKitType) throws Exception {
 		logger.debug("getSolutionRevisionMap - start");
 		// ACUMOS-2782 - create map of solutionId and revisionId to export (deploy_env.sh)
 		Map<String, String> solRevMap = new HashMap<String, String>();
@@ -1155,9 +1155,16 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 			CommonDataServiceRestClientImpl cmnDataService = getClient(dBean.getCmnDataUrl(), dBean.getCmnDataUser(), dBean.getCmnDataPd());
 			for (ContainerBean containerBean: containerBeans) {
 				String image = containerBean.getImage();
-				Map<String, String> imageMetaMap = CommonUtil.parseImageToken(image);
-				String solutionId = imageMetaMap.get(DockerKubeConstants.SOLUTION_ID);
-				String solVersion = imageMetaMap.get(DockerKubeConstants.VERSION);
+				String solutionId  = null;
+				String solVersion = null;
+				if ("CP".equalsIgnoreCase(solutionToolKitType)) {
+					solutionId = dBean.getSolutionId();
+					solVersion = getSolutionVersion(dBean.getCmnDataUrl(), dBean.getCmnDataUser(), dBean.getCmnDataPd(), solutionId, dBean.getSolutionRevisionId());
+				}else {
+					Map<String, String> imageMetaMap = CommonUtil.parseImageToken(image);
+					solutionId = imageMetaMap.get(DockerKubeConstants.SOLUTION_ID);
+					solVersion = imageMetaMap.get(DockerKubeConstants.VERSION);
+				}
 				List<MLPSolutionRevision> revisions = cmnDataService.getSolutionRevisions(solutionId);
 				for (MLPSolutionRevision revision: revisions) {
 					if (revision.getVersion().equals(solVersion)) {
@@ -1171,4 +1178,20 @@ public String getSingleSolutionYMLFile(String imageTag,String singleModelPort,De
 		logger.debug("getSolutionRevisionMap - end");
 	}
 
+	public String getSolutionVersion(String dataSourceUrl,String dataSourceUser,String dataSourcePd,
+			String solutionId, String solutionRevisionId) throws Exception {
+		logger.debug("getSolutionVersion Begin");
+		MLPSolutionRevision mlpSolutionrevision = null;
+		try {
+			CommonDataServiceRestClientImpl client = getClient(dataSourceUrl, dataSourceUser, dataSourcePd);
+			mlpSolutionrevision = client.getSolutionRevision(solutionId, solutionRevisionId);
+			logger.debug("Solution version " + mlpSolutionrevision.getVersion());
+		} catch (Exception e) {
+			logger.error("Exception in getSolutionVersion", e);
+			throw e;
+		}
+		logger.debug("getSolutionVersion end");
+		return mlpSolutionrevision.getVersion();
+	}
+	
 }
