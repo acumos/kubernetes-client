@@ -8,9 +8,9 @@
  * under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *  
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ * 
  * This file is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -43,16 +43,16 @@ import com.dockerKube.utils.DockerKubeConstants;
 
 @RestController
 public class KubeController {
-	
+
 	@Autowired
 	private Environment env;
-	
+
 	@Autowired
 	KubeService kubeService;
-	
+
 	private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-	
-	
+
+
 	@RequestMapping(value = "/getSolutionZip/{solutionId}/{revisionId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	public void getSolutionZip(@PathVariable("solutionId") String solutionId, @PathVariable("revisionId") String revisionId,HttpServletResponse response) throws Exception {
 		 LogConfig.setEnteringMDCs("kubernetes-client","getSolutionZip");
@@ -81,25 +81,25 @@ public class KubeController {
 	   	 String dataBrokerModelPort=(env.getProperty(DockerKubeConstants.DATABROKER_MODEL_PORT) != null) ? env.getProperty(DockerKubeConstants.DATABROKER_MODEL_PORT) : "";
 		 String dataBrokerNodePort=(env.getProperty(DockerKubeConstants.DATABROKER_NODE_PORT) != null) ? env.getProperty(DockerKubeConstants.DATABROKER_NODE_PORT) : "";
 		 String dataBrokerTargetPort=(env.getProperty(DockerKubeConstants.DATABROKER_TARGET_PORT) != null) ? env.getProperty(DockerKubeConstants.DATABROKER_TARGET_PORT) : "";
-		 
+
 		 String probeModelPort=(env.getProperty(DockerKubeConstants.PROBE_MODEL_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_MODEL_PORT) : "";
 		 String probeNodePort=(env.getProperty(DockerKubeConstants.PROBE_NODE_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_NODE_PORT) : "";
 		 String probeTargetPort=(env.getProperty(DockerKubeConstants.PROBE_TARGET_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_TARGET_PORT) : "";
 		 String probeApiPort=(env.getProperty(DockerKubeConstants.PROBE_API_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_API_PORT) : "";
-		 
+
 		 String dockerProxyHost=(env.getProperty(DockerKubeConstants.DOCKER_PROXY_HOST) != null) ? env.getProperty(DockerKubeConstants.DOCKER_PROXY_HOST) : "";
 		 String dockerProxyPort=(env.getProperty(DockerKubeConstants.DOCKER_PROXY_PORT) != null) ? env.getProperty(DockerKubeConstants.DOCKER_PROXY_PORT) : "";
-		 
+
 		 String probeExternalPort=(env.getProperty(DockerKubeConstants.PROBE_EXTERNAL_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_EXTERNAL_PORT) : "";
 		 String probeSchemaPort=(env.getProperty(DockerKubeConstants.PROBE_SCHEMA_PORT) != null) ? env.getProperty(DockerKubeConstants.PROBE_SCHEMA_PORT) : "";
 		 String nginxImageName=(env.getProperty(DockerKubeConstants.NGINX_IMAGE_NAME) != null) ? env.getProperty(DockerKubeConstants.NGINX_IMAGE_NAME) : "";
 		 String nexusEndPointURL=(env.getProperty(DockerKubeConstants.NEXUS_END_POINTURL) != null) ? env.getProperty(DockerKubeConstants.NEXUS_END_POINTURL) : "";
-		 
+
 		 String logstashHost=(env.getProperty(DockerKubeConstants.LOGSTASH_HOST) != null) ? env.getProperty(DockerKubeConstants.LOGSTASH_HOST) : "";
 		 String logstashIp=(env.getProperty(DockerKubeConstants.LOGSTASH_IP) != null) ? env.getProperty(DockerKubeConstants.LOGSTASH_IP) : "";
 		 String logstashPort=(env.getProperty(DockerKubeConstants.LOGSTASH_PORT) != null) ? env.getProperty(DockerKubeConstants.LOGSTASH_PORT) : "";
-		 
-		 
+
+
 	   	 dBean.setSolutionId(solutionId);
     	 dBean.setSolutionRevisionId(revisionId);
     	 dBean.setNexusUrl(nexusUrl);
@@ -138,7 +138,7 @@ public class KubeController {
 			 dBean.setLogstashHost(logstashHost);
 			 dBean.setLogstashIp(logstashIp);
     	 dBean.setLogstashPort(logstashPort);
-    	 
+
     	 log.debug("probeExternalPort "+probeExternalPort);
     	 log.debug("probeSchemaPort "+probeSchemaPort);
     	 log.debug("nginxImageName "+nginxImageName);
@@ -181,12 +181,12 @@ public class KubeController {
 	   	log.debug("solutionToolKitType "+solutionToolKitType);
 	   	  if(solutionToolKitType!=null && !"".equals(solutionToolKitType) && "CP".equalsIgnoreCase(solutionToolKitType)){
 	   		log.debug("Composite Solution Details Start");
-	   		solutionZip=kubeService.compositeSolutionDetails(dBean);
+	   		solutionZip=kubeService.compositeSolutionDetails(dBean, solutionToolKitType);
 	   		log.debug("Composite Solution Deployment End");
 	   	  }else{
 	   		log.debug("Single Solution Details Start");
 	   		String imageTag=kubeService.getSingleImageData(solutionId, revisionId, cmnDataUrl, cmnDataUser, cmnDataPd);
-	   		solutionZip=kubeService.singleSolutionDetails(dBean, imageTag, singleModelPort);
+	   		solutionZip=kubeService.singleSolutionDetails(dBean, imageTag, singleModelPort, solutionToolKitType);
 	   		log.debug("Single Solution Details End");
 	   	  }
 	   	response.setStatus(200);
@@ -195,7 +195,7 @@ public class KubeController {
 			response.setStatus(404);
 			LogConfig.clearMDCDetails();
 		}
-	   	
+
 	    response.setHeader("Content-Disposition", "attachment; filename=solution.zip");
 	    response.getOutputStream().write(solutionZip);
 	   	log.debug("End getSolutionZip");
